@@ -19,12 +19,18 @@ class RunnerSpec extends FunSpecWithSubject with Matchers {
           player.units.filter(_.isInstanceOf[Worker]).size shouldEqual 5
         }
       }
+      it("各陣営のユニットのHPは最大") {
+        subject().players.foreach { player =>
+          player.units.foreach { unit =>
+            unit.hp shouldEqual unit.maxHp
+          }
+        }
+      }
       describeSubject("フィールド", subject().field) { subject =>
         it("100x100マスで構成される") {
           subject().width shouldEqual 100
           subject().height shouldEqual 100
         }
-        it("各陣営の城, ワーカーのHPは最大")(pending)
         it("自陣営の城は(0, 0)の40マス圏内に配置される")(pending)
         it("敵陣営の城は(99, 99)の40マス圏内に配置される")(pending)
         it("初期ワーカーは各陣営の城と同じ場所に配置される")(pending)
