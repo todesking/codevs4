@@ -39,7 +39,7 @@ class RunnerSpec extends FunSpecWithSubject with Matchers {
           }
         }
       }
-      describeSubject("フィールド", subject().field) { subject =>
+      describeSubject("フィールド(Field)", subject().field) { subject =>
         it("100x100マスで構成される") {
           subject().width shouldEqual 100
           subject().height shouldEqual 100
@@ -54,7 +54,9 @@ class RunnerSpec extends FunSpecWithSubject with Matchers {
           byDist(0).size shouldEqual 10
           byDist(1).size shouldEqual 10
         }
-        it("資源マス同士は重ならない")(pending)
+        it("資源マス同士は重ならない") {
+          subject().resources.groupBy(_.pos).size shouldEqual subject().resources.size
+        }
         it("資源マスは城の視野外に配置される")(pending)
       }
     }
