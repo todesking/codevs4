@@ -206,8 +206,19 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
             stage().units.size shouldEqual initialUnitSize() + 1
           }
       }
-      describe("指揮下にないユニットに対するコマンド") {
-        it("無視される")(pending)
+      describeSubject("指揮下にないユニットに対するコマンド", {
+        stage().player1.addResource(initialResource)
+        stage().player2.addResource(initialResource)
+        Phase.CommandPhase.execute(
+          stage(),
+          Seq(Command.Produce(stage().castle2, CVUnit.Kind.Worker)),
+          Seq()
+        )
+        stage()
+      }) { stage =>
+        it("無視される") {
+          stage().units.size shouldEqual initialUnitSize()
+        }
       }
     }
     describe("戦闘フェーズ") {

@@ -10,7 +10,7 @@ class CVRandom {
     from + random.nextInt(to - from + 1)
 }
 
-class PlayerState {
+class PlayerState(val playerId: Int) {
   var resources: Int = 0
   var castle: Castle = null
   val units = new ArrayBuffer[CVUnit]
@@ -38,8 +38,8 @@ class Stage(
   var turn: Int = 0,
   var nextUnitID: Int = 0
 ) {
-  val player1 = new PlayerState()
-  val player2 = new PlayerState()
+  val player1 = new PlayerState(1)
+  val player2 = new PlayerState(2)
 
   def castle1: Castle = player1.castle
   def castle2: Castle = player2.castle
@@ -216,7 +216,7 @@ case class Worker(override val id: Int, override val owner: PlayerState, overrid
 object Phase {
   object CommandPhase {
     def execute(stage: Stage, p1Command: Seq[Command], p2Command: Seq[Command]): Unit = {
-      (sanitize(p1Command) ++ sanitize(p2Command)).foreach {
+      (sanitize(p1Command, stage.player1.playerId) ++ sanitize(p2Command, stage.player2.playerId)).foreach {
         case Command.Produce(unit, kind) =>
           if(unit.kind.canCreate(kind) && unit.owner.hasEnoughResource(kind.cost)) {
             kind.create(stage, unit.owner, unit.pos)
@@ -224,11 +224,11 @@ object Phase {
           }
       }
     }
-    def sanitize(commands: Seq[Command]): Seq[Command] = {
+    private[this] def sanitize(commands: Seq[Command], playerId: Int): Seq[Command] = {
       val commandedIds = scala.collection.mutable.HashSet.empty[Int]
       val sanitized = new ArrayBuffer[Command]
       commands.foreach { command =>
-        if(!commandedIds.contains(command.unit.id)) {
+        if(!commandedIds.contains(command.unit.id) && command.unit.owner.playerId == playerId) {
           commandedIds += command.unit.id
           sanitized += command
         }
