@@ -105,7 +105,7 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
     }
   }
   describe("フェーズ進行") {
-    describe("移動&生産フェーズ") {
+    describeSubject("移動&生産フェーズ(Phase.Command)", Stage.minimalState()) { stage =>
       describe("移動コマンド") {
         describe("移動可能") {
           it("ユニットが指示された方向に移動する")(pending)
@@ -115,8 +115,20 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
         }
       }
       describe("生産コマンド") {
-        describe("生産可能") {
-          it("コマンドを実行したユニットと同じ位置に新しいユニットが生成される")(pending)
+        describeSubject("生産可能", {
+          stage().player1.addResource(100)
+          Phase.CommandPhase.execute(
+            stage(),
+            Seq(Command.Production(stage().castle1, CVUnit.Kind.Worker)),
+            Seq()
+          )
+          stage()
+        }) { stage =>
+          it("コマンドを実行したユニットと同じ位置に新しいユニットが生成される") {
+            val units = stage().field.unitsAt(stage().castle1.pos).filter(_ != stage().castle1)
+            units.size shouldEqual 1
+            units.head.isInstanceOf[Worker] shouldEqual true
+          }
           it("生産したユニットのぶん資源が減る")(pending)
           it("生産されたユニットのHPは最大")(pending)
           it("生産されたユニットのIDはStageに設定された次ID")(pending)
