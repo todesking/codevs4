@@ -46,6 +46,8 @@ class Stage(
 
   val field = new Field(this)
 
+  def units: Seq[CVUnit] = field.units
+
   def assertInitialized(): Unit = {
     assert(castle1 != null)
     assert(castle2 != null)
@@ -179,6 +181,9 @@ sealed abstract class CVUnit(val id: Int, val owner: PlayerState, val pos: Pos) 
 object CVUnit {
   sealed abstract class Kind(val code: String, val cost: Int) {
     def create(stage: Stage, owner: PlayerState, pos: Pos): CVUnit
+    def canCreate(kind: Kind): Boolean =
+      creatables.contains(kind)
+    val creatables: Set[Kind] = Set.empty
   }
   object Kind {
     object Worker extends Kind("0", 40) {
@@ -188,6 +193,7 @@ object CVUnit {
     object Castle extends Kind("-", 0) {
       override def create(stage: Stage, owner: PlayerState, pos: Pos) =
         stage.createCastle(owner, pos)
+      override val creatables: Set[Kind] = Set(Worker)
     }
     // TODO: more
   }
@@ -211,8 +217,10 @@ object Phase {
       p1Command.foreach {
         case Command.Nop =>
         case Command.Production(unit, kind) =>
-          kind.create(stage, unit.owner, unit.pos)
-          unit.owner.consumeResource(kind.cost)
+          if(unit.kind.canCreate(kind)) {
+            kind.create(stage, unit.owner, unit.pos)
+            unit.owner.consumeResource(kind.cost)
+          }
       }
     }
   }
