@@ -3,6 +3,7 @@ package com.todesking.codevs4.runner
 import org.scalatest.{FunSpec, Matchers}
 
 class RunnerSpec extends FunSpecWithSubject with Matchers {
+  implicit val rand = new CVRandom
   describe("ステージ(Stage)") {
     describeSubject("初期状態", Stage.initialState(99)) { subject =>
       it("ステージIDは指定されたものである") { subject().id shouldEqual 99 }
@@ -12,21 +13,23 @@ class RunnerSpec extends FunSpecWithSubject with Matchers {
         subject().player1.resources shouldEqual 0
         subject().player2.resources shouldEqual 0
       }
+      it("各陣営は城1, ワーカー5が与えられる") {
+        subject().players.foreach { player =>
+          player.units.filter(_.isInstanceOf[Castle]).size shouldEqual 1
+        }
+      }
       describeSubject("フィールド", subject().field) { subject =>
         it("100x100マスで構成される") {
           subject().width shouldEqual 100
           subject().height shouldEqual 100
         }
-        describe("初期状態") {
-          it("各陣営は城1, ワーカー5が与えられる")(pending)
-          it("各陣営の城, ワーカーのHPは最大")(pending)
-          it("自陣営の城は(0, 0)の40マス圏内に配置される")(pending)
-          it("敵陣営の城は(99, 99)の40マス圏内に配置される")(pending)
-          it("初期ワーカーは各陣営の城と同じ場所に配置される")(pending)
-          it("資源マスが(0, 0)の99マス圏内に10, (99, 99)の99マス圏内に10配置される")(pending)
-          it("資源マス同士は重ならない")(pending)
-          it("資源マスは城の視野外に配置される")(pending)
-        }
+        it("各陣営の城, ワーカーのHPは最大")(pending)
+        it("自陣営の城は(0, 0)の40マス圏内に配置される")(pending)
+        it("敵陣営の城は(99, 99)の40マス圏内に配置される")(pending)
+        it("初期ワーカーは各陣営の城と同じ場所に配置される")(pending)
+        it("資源マスが(0, 0)の99マス圏内に10, (99, 99)の99マス圏内に10配置される")(pending)
+        it("資源マス同士は重ならない")(pending)
+        it("資源マスは城の視野外に配置される")(pending)
       }
     }
     describe("ターン進行") {
