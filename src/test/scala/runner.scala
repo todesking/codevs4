@@ -126,10 +126,11 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
           )
           stage()
         }) { stage =>
+          val createdUnits = let(stage().field.unitsAt(stage().castle1.pos).filter(_ != stage().castle1))
           it("コマンドを実行したユニットと同じ位置に新しいユニットが生成される") {
             val units = stage().field.unitsAt(stage().castle1.pos).filter(_ != stage().castle1)
-            units.size shouldEqual 1
-            units.head.kind shouldEqual CVUnit.Kind.Worker
+            createdUnits().size shouldEqual 1
+            createdUnits().head.kind shouldEqual CVUnit.Kind.Worker
           }
           it("生産したユニットのぶん資源が減る") {
             stage().player1.resources shouldEqual(initialResource - CVUnit.Kind.Worker.cost)

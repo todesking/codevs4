@@ -5,7 +5,7 @@ import org.scalatest.FunSpec
 trait RSpecLikeSpec extends FunSpec {
   import org.scalatest.{Tag, Status, Args}
 
-  var subjectStack = Seq.empty[SubjectAccess[_]]
+  private[this] var subjectStack = Seq.empty[SubjectAccess[_]]
 
   class SubjectAccess[A](val generate: () => A) {
     val store = new ThreadLocal[Any]
@@ -24,22 +24,32 @@ trait RSpecLikeSpec extends FunSpec {
       store.get.asInstanceOf[A]
   }
 
+  def let[A](generate: => A): SubjectAccess[A] = {
+    val access = new SubjectAccess[A](() => generate)
+    subjectStack :+= access
+    access
+  }
+
+  def scoping(fun: => Unit) = {
+    val oldStack = subjectStack
+    fun
+    subjectStack = oldStack
+  }
+
   def withSubject[A](subject: => A)(fun: SubjectAccess[A] => Unit): Unit = {
     val generator = {() => subject}
     val access = new SubjectAccess[A](generator)
-    val oldStack = subjectStack
-    subjectStack :+= access
-    fun(access)
-    subjectStack = oldStack
+    scoping {
+      subjectStack :+= access
+      fun(access)
+    }
   }
 
   class ItWordWithSubject extends ItWord {
     override def apply(specText: String, testTags: Tag*)(testFun: => Unit) {
-      val stack = subjectStack
+      val subjects = subjectStack
       super.apply(specText, testTags:_*) {
-        stack.foreach { access =>
-          access.reload()
-        }
+        subjects.foreach(_.reload())
         testFun
       }
     }
