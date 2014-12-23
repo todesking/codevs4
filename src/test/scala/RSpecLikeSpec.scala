@@ -24,19 +24,19 @@ trait RSpecLikeSpec extends FunSpec {
       store.get.asInstanceOf[A]
   }
 
-  def let[A](generate: => A): SubjectAccess[A] = {
+  protected def let[A](generate: => A): SubjectAccess[A] = {
     val access = new SubjectAccess[A](() => generate)
     subjectStack :+= access
     access
   }
 
-  def scoping(fun: => Unit) = {
+  protected def scoping(fun: => Unit) = {
     val oldStack = subjectStack
     fun
     subjectStack = oldStack
   }
 
-  def withSubject[A](subject: => A)(fun: SubjectAccess[A] => Unit): Unit = {
+  protected def withSubject[A](subject: => A)(fun: SubjectAccess[A] => Unit): Unit = {
     val generator = {() => subject}
     val access = new SubjectAccess[A](generator)
     scoping {
@@ -63,5 +63,15 @@ trait RSpecLikeSpec extends FunSpec {
         fun(subject)
       }
     }
+  }
+
+  protected override def describe(description: String)(fun: => Unit) {
+    scoping {
+      super.describe(description)(fun)
+    }
+  }
+
+  protected def before(fun: => Unit): Unit = {
+    let(fun)
   }
 }
