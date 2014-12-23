@@ -87,8 +87,8 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
     }
     describeSubject("ターン進行", Stage.initialState(0)) { subject =>
       it("両者の入力を受け取ってターンを進め、結果を返す") {
-        val p1Command = Seq(Command.Nop)
-        val p2Command = Seq(Command.Nop)
+        val p1Command = Seq()
+        val p2Command = Seq()
         subject().turn shouldEqual 0
         subject().step(p1Command, p2Command) shouldEqual StepResult.InProgress
         subject().turn shouldEqual 1
@@ -115,7 +115,7 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
         }
       }
 
-      val initialResource = 100
+      val initialResource = 1000
       val initialNextUnitId = let(stage().nextUnitID)
       val initialUnitSize = let(stage().units.size)
       describe("生産コマンド") {
@@ -123,7 +123,7 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
           stage().player1.addResource(initialResource)
           Phase.CommandPhase.execute(
             stage(),
-            Seq(Command.Production(stage().castle1, CVUnit.Kind.Worker)),
+            Seq(Command.Produce(stage().castle1, CVUnit.Kind.Worker)),
             Seq()
           )
           stage()
@@ -153,7 +153,7 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
           stage().player1.addResource(initialResource)
           Phase.CommandPhase.execute(
             stage(),
-            Seq(Command.Production(stage().castle1, CVUnit.Kind.Castle)),
+            Seq(Command.Produce(stage().castle1, CVUnit.Kind.Castle)),
             Seq()
           )
           stage()
@@ -166,7 +166,7 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
           stage().player1.addResource(0)
           Phase.CommandPhase.execute(
             stage(),
-            Seq(Command.Production(stage().castle1, CVUnit.Kind.Worker)),
+            Seq(Command.Produce(stage().castle1, CVUnit.Kind.Worker)),
             Seq()
           )
           stage()
@@ -176,11 +176,35 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
           }
         }
       }
-      describe("何もしない") {
-        it("何もしない")(pending)
+      describeSubject("何もしない", {
+        Phase.CommandPhase.execute(
+          stage(),
+          Seq(),
+          Seq()
+        )
+        stage()
+      }) { stage =>
+        it("何もしない") {
+          stage().player1.resources shouldEqual 0
+          stage().units.size shouldEqual initialUnitSize()
+        }
       }
-      describe("1ユニットに対して複数のコマンド") {
-        it("最初のコマンド以外無視される")(pending)
+      describeSubject("1ユニットに対して複数のコマンド", {
+        stage().player1.addResource(initialResource)
+        Phase.CommandPhase.execute(
+          stage(),
+          Seq(
+            Command.Produce(stage().castle1, CVUnit.Kind.Worker),
+            Command.Produce(stage().castle1, CVUnit.Kind.Worker),
+            Command.Produce(stage().castle1, CVUnit.Kind.Worker)
+          ),
+          Seq()
+        )
+        stage()
+        }) { stage =>
+          it("最初のコマンド以外無視される") {
+            stage().units.size shouldEqual initialUnitSize() + 1
+          }
       }
       describe("指揮下にないユニットに対するコマンド") {
         it("無視される")(pending)

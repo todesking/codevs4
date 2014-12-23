@@ -82,10 +82,10 @@ class Stage(
   }
 }
 
-sealed abstract class Command
+sealed abstract class Command(val unit: CVUnit) {
+}
 object Command {
-  object Nop extends Command
-  case class Production(unit: CVUnit, kind: CVUnit.Kind) extends Command
+  case class Produce(override val unit: CVUnit, kind: CVUnit.Kind) extends Command(unit)
 }
 
 sealed abstract class StepResult
@@ -216,14 +216,24 @@ case class Worker(override val id: Int, override val owner: PlayerState, overrid
 object Phase {
   object CommandPhase {
     def execute(stage: Stage, p1Command: Seq[Command], p2Command: Seq[Command]): Unit = {
-      p1Command.foreach {
-        case Command.Nop =>
-        case Command.Production(unit, kind) =>
+      (sanitize(p1Command) ++ sanitize(p2Command)).foreach {
+        case Command.Produce(unit, kind) =>
           if(unit.kind.canCreate(kind) && unit.owner.hasEnoughResource(kind.cost)) {
             kind.create(stage, unit.owner, unit.pos)
             unit.owner.consumeResource(kind.cost)
           }
       }
+    }
+    def sanitize(commands: Seq[Command]): Seq[Command] = {
+      val commandedIds = scala.collection.mutable.HashSet.empty[Int]
+      val sanitized = new ArrayBuffer[Command]
+      commands.foreach { command =>
+        if(!commandedIds.contains(command.unit.id)) {
+          commandedIds += command.unit.id
+          sanitized += command
+        }
+      }
+      sanitized
     }
   }
 }
