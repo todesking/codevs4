@@ -246,6 +246,20 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
           stage().units.size shouldEqual initialUnitSize()
         }
       }
+      describe("死んだユニットに対するコマンド") {
+        before {
+          stage().player1.addResource(initialResource)
+          stage().castle1.hp = 0
+          Phase.CommandPhase.execute(
+            stage(),
+            Seq(Command.Produce(stage().castle1, CVUnit.Kind.Worker)),
+            Seq()
+          )
+        }
+        it("無視される") {
+          stage().units.size shouldEqual initialUnitSize()
+        }
+      }
     }
     describe("戦闘フェーズ(Phase.Battle)") {
       val stage = let(Stage.minimalState())

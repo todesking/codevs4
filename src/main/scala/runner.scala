@@ -285,7 +285,11 @@ object Phase {
       val commandedIds = scala.collection.mutable.HashSet.empty[Int]
       val sanitized = new ArrayBuffer[Command]
       commands.foreach { command =>
-        if(!commandedIds.contains(command.unit.id) && command.unit.owner.playerId == playerId) {
+        if(
+          !commandedIds.contains(command.unit.id) &&
+          command.unit.owner.playerId == playerId &&
+          command.unit.hp > 0
+        ) {
           commandedIds += command.unit.id
           sanitized += command
         }
