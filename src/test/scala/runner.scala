@@ -44,7 +44,16 @@ class RunnerSpec extends FunSpecWithSubject with Matchers {
           subject().width shouldEqual 100
           subject().height shouldEqual 100
         }
-        it("資源マスが(0, 0)の99マス圏内に10, (99, 99)の99マス圏内に10配置される")(pending)
+        it("資源マスが(0, 0)の99マス圏内に10, (99, 99)の99マス圏内に10配置される") {
+          val byDist = subject().resources.groupBy { r =>
+            if(r.pos.dist(Pos(0, 0)) <= 99) 0
+            else if(r.pos.dist(Pos(99, 99)) <= 99) 1
+            else 2
+          }
+          byDist.size shouldEqual 2
+          byDist(0).size shouldEqual 10
+          byDist(1).size shouldEqual 10
+        }
         it("資源マス同士は重ならない")(pending)
         it("資源マスは城の視野外に配置される")(pending)
       }

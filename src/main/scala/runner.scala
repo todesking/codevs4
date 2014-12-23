@@ -1,5 +1,7 @@
 package com.todesking.codevs4.runner
 
+import scala.collection.mutable.ArrayBuffer
+
 class CVRandom {
   val random = new scala.util.Random
 
@@ -11,7 +13,7 @@ class CVRandom {
 class PlayerState {
   var resources: Int = 0
   var castle: Castle = null
-  val units = new scala.collection.mutable.ArrayBuffer[CVUnit]
+  val units = new ArrayBuffer[CVUnit]
 }
 
 case class Pos(x: Int, y: Int) {
@@ -54,13 +56,19 @@ class Stage(
 object Stage {
   def initialState(stageId: Int)(implicit rand: CVRandom): Stage = {
     val stage = new Stage(stageId)
+    val field = stage.field
 
-    val castle1 = stage.createCastle(stage.player1, stage.field.randomPos(Pos(0, 0), 40))
-    val castle2 = stage.createCastle(stage.player2, stage.field.randomPos(Pos(99, 99), 40))
+    val castle1 = stage.createCastle(stage.player1, field.randomPos(Pos(0, 0), 40))
+    val castle2 = stage.createCastle(stage.player2, field.randomPos(Pos(99, 99), 40))
 
     (1 to 5).foreach { _ =>
       stage.createWorker(stage.player1, castle1.pos)
       stage.createWorker(stage.player2, castle2.pos)
+    }
+
+    (1 to 10).foreach { _ =>
+      field.addResource(field.randomNoResourcePos(Pos(0, 0), 99))
+      field.addResource(field.randomNoResourcePos(Pos(99, 99), 99))
     }
 
     stage
@@ -77,7 +85,27 @@ class Field {
     val y = rand.nextInt(Math.max(center.y - d, 0), Math.min(center.x + d, height - 1))
     Pos(x, y)
   }
+
+  def randomNoResourcePos(center: Pos, dist: Int)(implicit rand: CVRandom): Pos = {
+    var pos = randomPos(center, dist)
+    while(hasResourceAt(pos))
+      pos = randomPos(center, dist)
+    pos
+  }
+
+  def hasResourceAt(pos: Pos): Boolean = {
+    resources.exists(_.pos == pos)
+  }
+
+  val resources = new ArrayBuffer[Resource]
+
+  def addResource(pos: Pos): Unit = {
+    require(!hasResourceAt(pos))
+    resources += Resource(pos)
+  }
 }
+
+case class Resource(pos: Pos)
 
 sealed abstract class CVUnit(val owner: PlayerState, val pos: Pos) {
   def maxHp: Int
