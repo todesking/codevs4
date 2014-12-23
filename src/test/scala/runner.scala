@@ -162,8 +162,18 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
             stage().units.size shouldEqual initialUnitSize()
           }
         }
-        describe("生産不能(資源不足)") {
-          it("何もしない")(pending)
+        describeSubject("生産不能(資源不足)", {
+          stage().player1.addResource(0)
+          Phase.CommandPhase.execute(
+            stage(),
+            Seq(Command.Production(stage().castle1, CVUnit.Kind.Worker)),
+            Seq()
+          )
+          stage()
+        }) { stage =>
+          it("ユニットは生産されない") {
+            stage().units.size shouldEqual initialUnitSize()
+          }
         }
       }
       describe("何もしない") {

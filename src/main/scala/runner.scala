@@ -14,13 +14,15 @@ class PlayerState {
   var resources: Int = 0
   var castle: Castle = null
   val units = new ArrayBuffer[CVUnit]
+  def hasEnoughResource(n: Int): Boolean =
+    resources >= n
   def addResource(n: Int): Unit = {
     require(n >= 0)
     resources += n
   }
   def consumeResource(n: Int): Unit = {
     require(n >= 0)
-    require(n <= resources)
+    require(hasEnoughResource(n))
     resources -= n
   }
 }
@@ -217,7 +219,7 @@ object Phase {
       p1Command.foreach {
         case Command.Nop =>
         case Command.Production(unit, kind) =>
-          if(unit.kind.canCreate(kind)) {
+          if(unit.kind.canCreate(kind) && unit.owner.hasEnoughResource(kind.cost)) {
             kind.create(stage, unit.owner, unit.pos)
             unit.owner.consumeResource(kind.cost)
           }
