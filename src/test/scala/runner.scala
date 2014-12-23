@@ -65,8 +65,14 @@ class RunnerSpec extends FunSpecWithSubject with Matchers {
         }
       }
     }
-    describe("ターン進行") {
-      it("両者の入力を受け取ってターンを進め、結果を返す")(pending)
+    describeSubject("ターン進行", Stage.initialState(0)) { subject =>
+      it("両者の入力を受け取ってターンを進め、結果を返す") {
+        val p1Command = Seq(Command.Nop)
+        val p2Command = Seq(Command.Nop)
+        subject().turn shouldEqual 0
+        subject().step(p1Command, p2Command) shouldEqual StepResult.InProgress
+        subject().turn shouldEqual 1
+      }
     }
     describe("インプット") {
       it("現在の状態から、各プレイヤーに対するインプットデータを生成できる")(pending)

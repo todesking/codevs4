@@ -51,6 +51,24 @@ class Stage(
     }
     unit
   }
+
+  def step(p1Command: Seq[Command], p2Command: Seq[Command]): StepResult = {
+    turn += 1
+    StepResult.InProgress
+  }
+}
+
+sealed class Command
+object Command {
+  object Nop extends Command
+}
+
+sealed class StepResult
+object StepResult {
+  case object InProgress extends StepResult
+  case object P1Win extends StepResult
+  case object P2Win extends StepResult
+  case object Draw extends StepResult
 }
 
 object Stage {
