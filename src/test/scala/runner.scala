@@ -26,13 +26,17 @@ class RunnerSpec extends FunSpecWithSubject with Matchers {
           }
         }
       }
+      it("プレイヤー1の城は(0, 0)の40マス圏内に配置される") {
+        subject().player1.castle.pos.dist(Pos(0, 0)) should be <= 40
+      }
+      it("プレイヤー2の城は(99, 99)の40マス圏内に配置される") {
+        subject().player2.castle.pos.dist(Pos(99, 99)) should be <= 40
+      }
       describeSubject("フィールド", subject().field) { subject =>
         it("100x100マスで構成される") {
           subject().width shouldEqual 100
           subject().height shouldEqual 100
         }
-        it("自陣営の城は(0, 0)の40マス圏内に配置される")(pending)
-        it("敵陣営の城は(99, 99)の40マス圏内に配置される")(pending)
         it("初期ワーカーは各陣営の城と同じ場所に配置される")(pending)
         it("資源マスが(0, 0)の99マス圏内に10, (99, 99)の99マス圏内に10配置される")(pending)
         it("資源マス同士は重ならない")(pending)
