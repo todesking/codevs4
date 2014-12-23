@@ -128,10 +128,13 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
             worker1().pos shouldEqual Pos(0, 1)
           }
         }
-        describe("移動不能()") {
+        describe("移動不能(座標がフィールド外)") {
           it("何もしない") {
             worker2().pos shouldEqual Pos(99, 99)
           }
+        }
+        describe("移動不能(動けないユニット)") {
+          it("何もしない")(pending)
         }
       }
 
@@ -259,11 +262,12 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
       }
       describe("攻撃範囲に敵がいるユニットの場合") {
         describe("敵1体") {
-          val unit1 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player1, Pos(50, 50)) }
-          val unit2 = let { stage().createUnit(CVUnit.Kind.Knight, stage().player2, Pos(50, 50 + CVUnit.Kind.Worker.attackRange)) }
+          val worker = let { stage().createUnit(CVUnit.Kind.Worker, stage().player1, Pos(50, 50)) }
+          val knight = let { stage().createUnit(CVUnit.Kind.Knight, stage().player2, Pos(50, 50 + CVUnit.Kind.Worker.attackRange)) }
           before { Phase.BattlePhase.execute(stage()) }
 
           it("攻撃力ぶんのダメージを与える") {
+            worker().hp shouldEqual(worker().maxHp - DamageTable(knight().kind, worker().kind))
           }
         }
         describe("1マスに複数(<=10)の敵がスタックされている場合") {

@@ -152,6 +152,9 @@ class Field(val stage: Stage) {
 
   def units: Seq[CVUnit] = castle1.owner.units ++ castle2.owner.units
 
+  def unitsWithin(pos: Pos, dist: Int): Seq[CVUnit] =
+    units.filter { unit => pos.dist(unit.pos) <= dist }
+
   def randomPos(center: Pos, dist: Int)(implicit rand: CVRandom): Pos = {
     val x = rand.nextInt(Math.max(center.x - dist, 0), Math.min(center.x + dist, width - 1))
     val d = dist - Math.abs(x - center.x)
@@ -236,6 +239,19 @@ object CVUnit {
   }
 }
 
+object DamageTable {
+  def apply(attacker: CVUnit.Kind, defender: CVUnit.Kind): Int = {
+    import CVUnit.Kind._
+    (attacker, defender) match {
+      case (Worker, _) => 100
+      case (Knight, Worker) => 100
+      case (Knight, Knight) => 500
+      case (Knight, _) => 200
+      case (Castle, _) => 100
+    }
+  }
+}
+
 object Phase {
   object CommandPhase {
     def execute(stage: Stage, p1Command: Seq[Command], p2Command: Seq[Command]): Unit = {
@@ -266,6 +282,13 @@ object Phase {
   }
   object BattlePhase {
     def execute(stage: Stage): Unit = {
+      stage.units.foreach { attacker =>
+        val defenders =
+          stage.field.unitsWithin(attacker.pos, attacker.attackRange).filter(_.owner != attacker.owner)
+        defenders.foreach { defender =>
+          defender.hp -= DamageTable(attacker.kind, defender.kind)
+        }
+      }
     }
   }
 }
