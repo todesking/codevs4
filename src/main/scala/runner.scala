@@ -34,7 +34,7 @@ case class Pos(x: Int, y: Int) {
 class Stage(
   val id: Int,
   var turn: Int = 0,
-  var nextUnitID: Int = 12
+  var nextUnitID: Int = 0
 ) {
   val player1 = new PlayerState()
   val player2 = new PlayerState()
@@ -52,11 +52,11 @@ class Stage(
   }
 
   def createCastle(owner: PlayerState, pos: Pos): Castle = {
-    registerUnit(Castle(owner, pos))
+    registerUnit(Castle(nextUnitID, owner, pos))
   }
 
   def createWorker(owner: PlayerState, pos: Pos): Worker = {
-    registerUnit(Worker(owner, pos))
+    registerUnit(Worker(nextUnitID, owner, pos))
   }
 
   private[this] def registerUnit[A <: CVUnit](unit: A): A = {
@@ -68,6 +68,7 @@ class Stage(
         unit.owner.castle = c
       case _ =>
     }
+    nextUnitID += 1
     unit
   }
 
@@ -166,7 +167,7 @@ class Field(val stage: Stage) {
 
 case class Resource(pos: Pos)
 
-sealed abstract class CVUnit(val owner: PlayerState, val pos: Pos) {
+sealed abstract class CVUnit(val id: Int, val owner: PlayerState, val pos: Pos) {
   def maxHp: Int
   val kind: CVUnit.Kind
   var hp: Int = maxHp
@@ -192,13 +193,13 @@ object CVUnit {
   }
 }
 
-case class Castle(override val owner: PlayerState, override val pos: Pos) extends CVUnit(owner, pos) {
+case class Castle(override val id: Int, override val owner: PlayerState, override val pos: Pos) extends CVUnit(id, owner, pos) {
   override lazy val kind = CVUnit.Kind.Castle
   override lazy val maxHp = 50000
   override lazy val visibility = 10
 }
 
-case class Worker(override val owner: PlayerState, override val pos: Pos) extends CVUnit(owner, pos) {
+case class Worker(override val id: Int, override val owner: PlayerState, override val pos: Pos) extends CVUnit(id, owner, pos) {
   override lazy val kind = CVUnit.Kind.Worker
   override lazy val maxHp = 2000
   override lazy val visibility = 10

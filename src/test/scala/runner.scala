@@ -116,6 +116,7 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
       }
 
       val initialResource = 100
+      val initialNextUnitId = let(stage().nextUnitID)
       describe("生産コマンド") {
         describeSubject("生産可能", {
           stage().player1.addResource(initialResource)
@@ -127,16 +128,21 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
           stage()
         }) { stage =>
           val createdUnits = let(stage().field.unitsAt(stage().castle1.pos).filter(_ != stage().castle1))
-          it("コマンドを実行したユニットと同じ位置に新しいユニットが生成される") {
+          it("コマンドを実行したユニットと同じ位置に新しいユニットが1体生成される") {
             val units = stage().field.unitsAt(stage().castle1.pos).filter(_ != stage().castle1)
             createdUnits().size shouldEqual 1
             createdUnits().head.kind shouldEqual CVUnit.Kind.Worker
+            createdUnits().head.pos shouldEqual stage().castle1.pos
           }
           it("生産したユニットのぶん資源が減る") {
             stage().player1.resources shouldEqual(initialResource - CVUnit.Kind.Worker.cost)
           }
-          it("生産されたユニットのHPは最大")(pending)
-          it("生産されたユニットのIDはStageに設定された次ID")(pending)
+          it("生産されたユニットのHPは最大") {
+            createdUnits().head.hp shouldEqual createdUnits().head.maxHp
+          }
+          it("生産されたユニットのIDはStageに設定された次ID") {
+            createdUnits().head.id shouldEqual initialNextUnitId()
+          }
           it("Stageの次IDは+1される")(pending)
         }
         describe("生産不能(不能な種別)") {
