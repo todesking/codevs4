@@ -289,7 +289,22 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
           }
         }
         describe("1マスに複数(>10)の敵がスタックされている場合") {
-          it("範囲内のすべての敵に、攻撃力を敵の合計で割ったダメージ(切り捨て)を与える(10>のスタックは10と計算)")(pending)
+          val worker = let { stage().createUnit(CVUnit.Kind.Worker, stage().player1, Pos(50, 50)) }
+          val knights = let {
+            (1 to 100).map { _ =>
+              stage().createUnit(CVUnit.Kind.Knight, stage().player2, Pos(50, 50 + 1))
+            } ++ Seq(
+              stage().createUnit(CVUnit.Kind.Knight, stage().player2, Pos(50 + 1, 50))
+            )
+          }
+
+          before { Phase.BattlePhase.execute(stage()) }
+          it("範囲内のすべての敵に、攻撃力を敵の合計で割ったダメージ(切り捨て)を与える(10>のスタックは10と計算)") {
+            val k = 10 + 1
+            knights().foreach { knight =>
+              knight.hp shouldEqual(knight.maxHp - DamageTable(worker().kind, knight.kind) / k)
+            }
+          }
         }
       }
     }
