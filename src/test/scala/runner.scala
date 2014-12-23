@@ -4,13 +4,19 @@ import org.scalatest.{FunSpec, Matchers}
 
 class RunnerSpec extends FunSpecWithSubject with Matchers {
   describe("ステージ(Stage)") {
-    describe("初期状態") {
-      it("ステージIDは指定されたものである")(pending)
-      it("ターン数 == 0")(pending)
-      it("次に生成されるユニットのID == 0")(pending)
-      it("両陣営の資源数 == 0")(pending)
-      describe("フィールド") {
-        it("100x100マスで構成される")(pending)
+    describeSubject("初期状態", Stage.initialState(99)) { subject =>
+      it("ステージIDは指定されたものである") { subject().id shouldEqual 99 }
+      it("ターン数 == 0") { subject().turn shouldEqual 0 }
+      it("次に生成されるユニットのID == 12(初期ユニットぶん確保済み)") { subject().nextUnitID shouldEqual 12 }
+      it("両陣営の資源数 == 0") {
+        subject().player1.resources shouldEqual 0
+        subject().player2.resources shouldEqual 0
+      }
+      describeSubject("フィールド", subject().field) { subject =>
+        it("100x100マスで構成される") {
+          subject().width shouldEqual 100
+          subject().height shouldEqual 100
+        }
         describe("初期状態") {
           it("各陣営は城1, ワーカー5が与えられる")(pending)
           it("各陣営の城, ワーカーのHPは最大")(pending)

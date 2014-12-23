@@ -5,27 +5,30 @@ import org.scalatest.FunSpec
 trait FunSpecWithSubject extends FunSpec {
   import org.scalatest.{Tag, Status, Args}
 
-  val subjectStore = new ThreadLocal[Any]
-
-  var currentSubject: () => Any = { () => null }
+  var subjectStack = Seq.empty[(() => Any, SubjectAccess[_])]
 
   class SubjectAccess[A] {
+    val store = new ThreadLocal[Any]
     def apply(): A =
-      subjectStore.get.asInstanceOf[A]
+      store.get.asInstanceOf[A]
   }
 
-  def with_subject[A](subject: => A)(fun: SubjectAccess[A] => Unit): Unit = {
-    val oldSubject = currentSubject
-    currentSubject = { () => subject }
-    fun(new SubjectAccess[A])
-    currentSubject = oldSubject
+  def withSubject[A](subject: => A)(fun: SubjectAccess[A] => Unit): Unit = {
+    val generator = {() => subject}
+    val access = new SubjectAccess[A]
+    val oldStack = subjectStack
+    subjectStack :+= (generator -> access)
+    fun(access)
+    subjectStack = oldStack
   }
 
   class ItWordWithSubject extends ItWord {
     override def apply(specText: String, testTags: Tag*)(testFun: => Unit) {
-      val subject = currentSubject
+      val stack = subjectStack
       super.apply(specText, testTags:_*) {
-        subjectStore.set(subject())
+        stack.foreach { case (generator, access) =>
+          access.store.set(generator())
+        }
         testFun
       }
     }
@@ -33,4 +36,11 @@ trait FunSpecWithSubject extends FunSpec {
 
   protected override val it = new ItWordWithSubject
 
+  protected def describeSubject[A](description: String, newSubject: => A)(fun: SubjectAccess[A] => Unit): Unit = {
+    withSubject(newSubject) { subject =>
+      describe(description) {
+        fun(subject)
+      }
+    }
+  }
 }
