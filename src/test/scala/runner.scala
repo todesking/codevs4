@@ -251,7 +251,7 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
       val stage = let(Stage.minimalState())
       describe("ユニットの攻撃範囲に敵がいない場合") {
         val unit1 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player1, Pos(50, 50)) }
-        val unit2 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player2, Pos(50, 50 + CVUnit.Kind.Worker.attackRange + 1)) }
+        val unit2 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player2, Pos(50, 50 + 20)) }
 
         before { Phase.BattlePhase.execute(stage()) }
 
@@ -263,7 +263,7 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
       describe("攻撃範囲に敵がいるユニットの場合") {
         describe("敵1体") {
           val worker = let { stage().createUnit(CVUnit.Kind.Worker, stage().player1, Pos(50, 50)) }
-          val knight = let { stage().createUnit(CVUnit.Kind.Knight, stage().player2, Pos(50, 50 + CVUnit.Kind.Worker.attackRange)) }
+          val knight = let { stage().createUnit(CVUnit.Kind.Knight, stage().player2, Pos(50, 50 + 1)) }
           before { Phase.BattlePhase.execute(stage()) }
 
           it("攻撃力ぶんのダメージを与える") {
@@ -271,7 +271,22 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
           }
         }
         describe("1マスに複数(<=10)の敵がスタックされている場合") {
-          it("範囲内のすべての敵に、攻撃力を敵の合計で割ったダメージ(切り捨て)を与える")(pending)
+          val worker = let { stage().createUnit(CVUnit.Kind.Worker, stage().player1, Pos(50, 50)) }
+          val knights = let {
+            (1 to 10).map { _ =>
+              stage().createUnit(CVUnit.Kind.Knight, stage().player2, Pos(50, 50 + 1))
+            } ++ Seq(
+              stage().createUnit(CVUnit.Kind.Knight, stage().player2, Pos(50 + 1, 50))
+            )
+          }
+
+          before { Phase.BattlePhase.execute(stage()) }
+
+          it("範囲内のすべての敵に、攻撃力を敵の合計で割ったダメージ(切り捨て)を与える") {
+            knights().foreach { knight =>
+              knight.hp shouldEqual(knight.maxHp - DamageTable(worker().kind, knight.kind) / knights().size)
+            }
+          }
         }
         describe("1マスに複数(>10)の敵がスタックされている場合") {
           it("範囲内のすべての敵に、攻撃力を敵の合計で割ったダメージ(切り捨て)を与える(10>のスタックは10と計算)")(pending)

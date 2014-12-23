@@ -46,6 +46,8 @@ case class Pos(x: Int, y: Int) {
       case Direction.Left => Pos(x - 1, y)
       case Direction.Right => Pos(x + 1, y)
     }
+  override def toString() =
+    s"($x, $y)"
 }
 
 class Stage(
@@ -198,10 +200,14 @@ class CVUnit(val id: Int, val kind: CVUnit.Kind, val owner: PlayerState, var pos
 
   def isVisible(pos: Pos): Boolean =
     this.pos.dist(pos) <= visibility
+
+  override def toString() =
+    s"CVUnit(id=${id}, owner=${owner.playerId}, pos=${pos}, kind=${kind}, HP=${hp}/${maxHp})"
 }
 
 object CVUnit {
   sealed abstract class Kind(
+    val name: String,
     val code: String,
     val cost: Int,
     val attackRange: Int,
@@ -211,9 +217,12 @@ object CVUnit {
   ) {
     def canCreate(kind: Kind): Boolean =
       creatables.contains(kind)
+    override def toString() =
+      s"${name}"
   }
   object Kind {
     object Worker extends Kind(
+      name = "Worker",
       code = "0",
       maxHp = 2000,
       attackRange = 2,
@@ -221,6 +230,7 @@ object CVUnit {
       cost = 40
     )
     object Castle extends Kind(
+      name = "Castle",
       code = "-",
       maxHp = 50000,
       attackRange = 10,
@@ -230,6 +240,7 @@ object CVUnit {
       override val creatables: Set[Kind] = Set(Worker)
     }
     object Knight extends Kind(
+      name = "Knight",
       code = "1",
       maxHp = 5000,
       attackRange = 2,
@@ -285,8 +296,9 @@ object Phase {
       stage.units.foreach { attacker =>
         val defenders =
           stage.field.unitsWithin(attacker.pos, attacker.attackRange).filter(_.owner != attacker.owner)
+        val k = defenders.groupBy(_.pos).values.map { vs => Math.min(vs.size, 10) }.sum
         defenders.foreach { defender =>
-          defender.hp -= DamageTable(attacker.kind, defender.kind)
+          defender.hp -= DamageTable(attacker.kind, defender.kind) / k
         }
       }
     }
