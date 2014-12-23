@@ -25,12 +25,17 @@ class Stage(
   val players = Seq(player1, player2)
   val field = new Field()
 
-  def createCastle(owner: PlayerState, pos: Pos): Unit = {
+  def createCastle(owner: PlayerState, pos: Pos): Castle = {
     registerUnit(Castle(owner, pos))
   }
 
-  private[this] def registerUnit(unit: CVUnit): Unit = {
+  def createWorker(owner: PlayerState, pos: Pos): Worker = {
+    registerUnit(Worker(owner, pos))
+  }
+
+  private[this] def registerUnit[A <: CVUnit](unit: A): A = {
     unit.owner.units += unit
+    unit
   }
 }
 
@@ -38,8 +43,13 @@ object Stage {
   def initialState(stageId: Int)(implicit rand: CVRandom): Stage = {
     val stage = new Stage(stageId)
 
-    stage.createCastle(stage.player1, stage.field.randomPos(Pos(0, 0), 99))
-    stage.createCastle(stage.player2, stage.field.randomPos(Pos(99, 99), 99))
+    val castle1 = stage.createCastle(stage.player1, stage.field.randomPos(Pos(0, 0), 99))
+    val castle2 = stage.createCastle(stage.player2, stage.field.randomPos(Pos(99, 99), 99))
+
+    (1 to 5).foreach { _ =>
+      stage.createWorker(stage.player1, castle1.pos)
+      stage.createWorker(stage.player2, castle2.pos)
+    }
 
     stage
   }
@@ -61,6 +71,9 @@ sealed abstract class CVUnit(val owner: PlayerState, pos: Pos) {
 }
 
 case class Castle(override val owner: PlayerState, pos: Pos) extends CVUnit(owner, pos) {
+}
+
+case class Worker(override val owner: PlayerState, pos: Pos) extends CVUnit(owner, pos) {
 }
 
 

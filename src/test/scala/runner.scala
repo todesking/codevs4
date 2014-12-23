@@ -16,6 +16,7 @@ class RunnerSpec extends FunSpecWithSubject with Matchers {
       it("各陣営は城1, ワーカー5が与えられる") {
         subject().players.foreach { player =>
           player.units.filter(_.isInstanceOf[Castle]).size shouldEqual 1
+          player.units.filter(_.isInstanceOf[Worker]).size shouldEqual 5
         }
       }
       describeSubject("フィールド", subject().field) { subject =>
