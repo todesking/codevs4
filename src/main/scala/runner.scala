@@ -84,9 +84,14 @@ object Stage {
       stage.createWorker(stage.player2, castle2.pos)
     }
 
+    val resourceCond: Pos => Boolean = {pos =>
+      !field.hasResourceAt(pos) &&
+        !field.castle1.isVisible(pos) &&
+        !field.castle2.isVisible(pos)
+    }
     (1 to 10).foreach { _ =>
-      field.addResource(field.randomPosThat(Pos(0, 0), 98)(!field.hasResourceAt(_)))
-      field.addResource(field.randomPosThat(Pos(99, 99), 98)(!field.hasResourceAt(_)))
+      field.addResource(field.randomPosThat(Pos(0, 0), 98)(resourceCond))
+      field.addResource(field.randomPosThat(Pos(99, 99), 98)(resourceCond))
     }
 
     stage

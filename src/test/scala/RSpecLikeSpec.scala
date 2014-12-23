@@ -5,19 +5,30 @@ import org.scalatest.FunSpec
 trait RSpecLikeSpec extends FunSpec {
   import org.scalatest.{Tag, Status, Args}
 
-  var subjectStack = Seq.empty[(() => Any, SubjectAccess[_])]
+  var subjectStack = Seq.empty[SubjectAccess[_]]
 
-  class SubjectAccess[A] {
+  class SubjectAccess[A](val generate: () => A) {
     val store = new ThreadLocal[Any]
+
+    def reload(): Unit =
+      store.set(generate())
+
+    def challange(n: Int)(fun: Int => Unit): Unit = {
+      (1 to n).foreach { i =>
+        reload()
+        fun(i)
+      }
+    }
+
     def apply(): A =
       store.get.asInstanceOf[A]
   }
 
   def withSubject[A](subject: => A)(fun: SubjectAccess[A] => Unit): Unit = {
     val generator = {() => subject}
-    val access = new SubjectAccess[A]
+    val access = new SubjectAccess[A](generator)
     val oldStack = subjectStack
-    subjectStack :+= (generator -> access)
+    subjectStack :+= access
     fun(access)
     subjectStack = oldStack
   }
@@ -26,8 +37,8 @@ trait RSpecLikeSpec extends FunSpec {
     override def apply(specText: String, testTags: Tag*)(testFun: => Unit) {
       val stack = subjectStack
       super.apply(specText, testTags:_*) {
-        stack.foreach { case (generator, access) =>
-          access.store.set(generator())
+        stack.foreach { access =>
+          access.reload()
         }
         testFun
       }

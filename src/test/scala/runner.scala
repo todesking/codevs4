@@ -27,15 +27,21 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
         }
       }
       it("プレイヤー1の城は(0, 0)の40マス圏内に配置される") {
-        subject().player1.castle.pos.dist(Pos(0, 0)) should be <= 40
+        subject.challange(100) { _ =>
+          subject().player1.castle.pos.dist(Pos(0, 0)) should be <= 40
+        }
       }
       it("プレイヤー2の城は(99, 99)の40マス圏内に配置される") {
-        subject().player2.castle.pos.dist(Pos(99, 99)) should be <= 40
+        subject.challange(100) { _ =>
+          subject().player2.castle.pos.dist(Pos(99, 99)) should be <= 40
+        }
       }
       it("初期ワーカーは各陣営の城と同じ場所に配置される") {
-        subject().players.foreach { player =>
-          player.units.filter(_.isInstanceOf[Worker]).foreach { worker =>
-            worker.pos shouldEqual player.castle.pos
+        subject.challange(10) { _ =>
+          subject().players.foreach { player =>
+            player.units.filter(_.isInstanceOf[Worker]).foreach { worker =>
+              worker.pos shouldEqual player.castle.pos
+            }
           }
         }
       }
@@ -45,22 +51,28 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
           subject().height shouldEqual 100
         }
         it("資源マスが(0, 0)の99マス圏内に10, (99, 99)の99マス圏内に10配置される(これ98マスが正解では)") {
-          val byDist = subject().resources.groupBy { r =>
-            if(r.pos.dist(Pos(0, 0)) <= 98) 0
-            else if(r.pos.dist(Pos(99, 99)) <= 98) 1
-            else 2
+          subject.challange(100) { _ =>
+            val byDist = subject().resources.groupBy { r =>
+              if(r.pos.dist(Pos(0, 0)) <= 98) 0
+              else if(r.pos.dist(Pos(99, 99)) <= 98) 1
+              else 2
+            }
+            byDist.size shouldEqual 2
+            byDist(0).size shouldEqual 10
+            byDist(1).size shouldEqual 10
           }
-          byDist.size shouldEqual 2
-          byDist(0).size shouldEqual 10
-          byDist(1).size shouldEqual 10
         }
         it("資源マス同士は重ならない") {
-          subject().resources.groupBy(_.pos).size shouldEqual subject().resources.size
+          subject.challange(100) { _ =>
+            subject().resources.groupBy(_.pos).size shouldEqual subject().resources.size
+          }
         }
         it("資源マスは城の視野外に配置される") {
-          subject().resources.foreach { resource =>
-            subject().castle1.isVisible(resource.pos) shouldEqual false
-            subject().castle2.isVisible(resource.pos) shouldEqual false
+          subject.challange(100) { _ =>
+            subject().resources.foreach { resource =>
+              subject().castle1.isVisible(resource.pos) shouldEqual false
+              subject().castle2.isVisible(resource.pos) shouldEqual false
+            }
           }
         }
       }
