@@ -15,8 +15,8 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
       }
       it("各陣営は城1, ワーカー5が与えられる") {
         subject().players.foreach { player =>
-          player.units.filter(_.isInstanceOf[Castle]).size shouldEqual 1
-          player.units.filter(_.isInstanceOf[Worker]).size shouldEqual 5
+          player.units.filter(_.kind == CVUnit.Kind.Castle).size shouldEqual 1
+          player.units.filter(_.kind == CVUnit.Kind.Worker).size shouldEqual 5
         }
       }
       it("各陣営のユニットのHPは最大") {
@@ -39,7 +39,7 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
       it("初期ワーカーは各陣営の城と同じ場所に配置される") {
         subject.challange(10) { _ =>
           subject().players.foreach { player =>
-            player.units.filter(_.isInstanceOf[Worker]).foreach { worker =>
+            player.units.filter(_.kind == CVUnit.Kind.Worker).foreach { worker =>
               worker.pos shouldEqual player.castle.pos
             }
           }

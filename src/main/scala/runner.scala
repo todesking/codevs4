@@ -20,7 +20,7 @@ class CVRandom {
 
 class PlayerState(val playerId: Int) {
   var resources: Int = 0
-  var castle: Castle = null
+  var castle: CVUnit = null
   val units = new ArrayBuffer[CVUnit]
   def hasEnoughResource(n: Int): Boolean =
     resources >= n
@@ -56,8 +56,8 @@ class Stage(
   val player1 = new PlayerState(1)
   val player2 = new PlayerState(2)
 
-  def castle1: Castle = player1.castle
-  def castle2: Castle = player2.castle
+  def castle1: CVUnit = player1.castle
+  def castle2: CVUnit = player2.castle
 
   val players = Seq(player1, player2)
 
@@ -70,21 +70,21 @@ class Stage(
     assert(castle2 != null)
   }
 
-  def createCastle(owner: PlayerState, pos: Pos): Castle = {
-    registerUnit(new Castle(nextUnitID, owner, pos))
+  def createCastle(owner: PlayerState, pos: Pos): CVUnit = {
+    registerUnit(new CVUnit(nextUnitID, CVUnit.Kind.Castle, owner, pos))
   }
 
-  def createWorker(owner: PlayerState, pos: Pos): Worker = {
-    registerUnit(new Worker(nextUnitID, owner, pos))
+  def createWorker(owner: PlayerState, pos: Pos): CVUnit = {
+    registerUnit(new CVUnit(nextUnitID, CVUnit.Kind.Worker, owner, pos))
   }
 
   private[this] def registerUnit[A <: CVUnit](unit: A): A = {
     unit.owner.units += unit
-    unit match {
-      case c: Castle =>
+    unit.kind match {
+      case CVUnit.Kind.Castle =>
         if(unit.owner.castle != null)
           throw new RuntimeException("城は1つしか持てない")
-        unit.owner.castle = c
+        unit.owner.castle = unit
       case _ =>
     }
     nextUnitID += 1
@@ -151,8 +151,8 @@ class Field(val stage: Stage) {
   val width: Int = 100
   val height: Int = 100
 
-  def castle1: Castle = stage.player1.castle
-  def castle2: Castle = stage.player2.castle
+  def castle1: CVUnit = stage.player1.castle
+  def castle2: CVUnit = stage.player2.castle
 
   def units: Seq[CVUnit] = castle1.owner.units ++ castle2.owner.units
 
@@ -190,46 +190,54 @@ class Field(val stage: Stage) {
 
 case class Resource(pos: Pos)
 
-sealed abstract class CVUnit(val id: Int, val owner: PlayerState, var pos: Pos) {
-  def maxHp: Int
-  val kind: CVUnit.Kind
+class CVUnit(val id: Int, val kind: CVUnit.Kind, val owner: PlayerState, var pos: Pos) {
+  def maxHp = kind.maxHp
+  def attackRange = kind.attackRange
+  def visibility = kind.visibility
+
   var hp: Int = maxHp
-  def visibility: Int
+
   def isVisible(pos: Pos): Boolean =
     this.pos.dist(pos) <= visibility
 }
 
 object CVUnit {
-  sealed abstract class Kind(val code: String, val cost: Int, val attackRange: Int) {
+  sealed abstract class Kind(
+    val code: String,
+    val cost: Int,
+    val attackRange: Int,
+    val maxHp: Int,
+    val visibility: Int
+  ) {
     def create(stage: Stage, owner: PlayerState, pos: Pos): CVUnit
     def canCreate(kind: Kind): Boolean =
       creatables.contains(kind)
     val creatables: Set[Kind] = Set.empty
   }
   object Kind {
-    object Worker extends Kind("0", 40, 2) {
+    object Worker extends Kind(
+      code = "0",
+      maxHp = 2000,
+      attackRange = 2,
+      visibility = 10,
+      cost = 40
+    ) {
       override def create(stage: Stage, owner: PlayerState, pos: Pos) =
         stage.createWorker(owner, pos)
     }
-    object Castle extends Kind("-", 0, 10) {
+    object Castle extends Kind(
+      code = "-",
+      maxHp = 50000,
+      attackRange = 10,
+      visibility = 10,
+      cost = 0
+    ) {
       override def create(stage: Stage, owner: PlayerState, pos: Pos) =
         stage.createCastle(owner, pos)
       override val creatables: Set[Kind] = Set(Worker)
     }
     // TODO: more
   }
-}
-
-class Castle(id: Int, owner: PlayerState, pos: Pos) extends CVUnit(id, owner, pos) {
-  override lazy val kind = CVUnit.Kind.Castle
-  override lazy val maxHp = 50000
-  override lazy val visibility = 10
-}
-
-class Worker(id: Int, owner: PlayerState, pos: Pos) extends CVUnit(id, owner, pos) {
-  override lazy val kind = CVUnit.Kind.Worker
-  override lazy val maxHp = 2000
-  override lazy val visibility = 10
 }
 
 object Phase {
