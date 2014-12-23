@@ -200,18 +200,18 @@ sealed abstract class CVUnit(val id: Int, val owner: PlayerState, var pos: Pos) 
 }
 
 object CVUnit {
-  sealed abstract class Kind(val code: String, val cost: Int) {
+  sealed abstract class Kind(val code: String, val cost: Int, val attackRange: Int) {
     def create(stage: Stage, owner: PlayerState, pos: Pos): CVUnit
     def canCreate(kind: Kind): Boolean =
       creatables.contains(kind)
     val creatables: Set[Kind] = Set.empty
   }
   object Kind {
-    object Worker extends Kind("0", 40) {
+    object Worker extends Kind("0", 40, 2) {
       override def create(stage: Stage, owner: PlayerState, pos: Pos) =
         stage.createWorker(owner, pos)
     }
-    object Castle extends Kind("-", 0) {
+    object Castle extends Kind("-", 0, 10) {
       override def create(stage: Stage, owner: PlayerState, pos: Pos) =
         stage.createCastle(owner, pos)
       override val creatables: Set[Kind] = Set(Worker)
@@ -258,6 +258,10 @@ object Phase {
         }
       }
       sanitized
+    }
+  }
+  object BattlePhase {
+    def execute(stage: Stage): Unit = {
     }
   }
 }

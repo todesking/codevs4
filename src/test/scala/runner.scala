@@ -244,9 +244,18 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
         }
       }
     }
-    describe("戦闘フェーズ") {
-      describe("攻撃範囲に敵がいないユニットの場合") {
-        it("何もしない")(pending)
+    describe("戦闘フェーズ(Phase.Battle)") {
+      val stage = let(Stage.minimalState())
+      describe("ユニットの攻撃範囲に敵がいない場合") {
+        val unit1 = let { stage().createWorker(stage().player1, Pos(50, 50)) }
+        val unit2 = let { stage().createWorker(stage().player2, Pos(50, 50 + CVUnit.Kind.Worker.attackRange + 1)) }
+
+        before { Phase.BattlePhase.execute(stage()) }
+
+        it("何もしない") {
+          unit1().hp shouldEqual unit1().maxHp
+          unit2().hp shouldEqual unit2().maxHp
+        }
       }
       describe("攻撃範囲に敵がいるユニットの場合") {
         describe("敵1体") {
