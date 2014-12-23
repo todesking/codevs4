@@ -109,8 +109,8 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
       val stage = let(Stage.minimalState())
 
       describe("移動コマンド") {
-        val worker1 = let { stage().createWorker(stage().player1, Pos(0, 0)) }
-        val worker2 = let { stage().createWorker(stage().player1, Pos(99, 99)) }
+        val worker1 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player1, Pos(0, 0)) }
+        val worker2 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player1, Pos(99, 99)) }
 
         before {
           Phase.CommandPhase.execute(
@@ -247,8 +247,8 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
     describe("戦闘フェーズ(Phase.Battle)") {
       val stage = let(Stage.minimalState())
       describe("ユニットの攻撃範囲に敵がいない場合") {
-        val unit1 = let { stage().createWorker(stage().player1, Pos(50, 50)) }
-        val unit2 = let { stage().createWorker(stage().player2, Pos(50, 50 + CVUnit.Kind.Worker.attackRange + 1)) }
+        val unit1 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player1, Pos(50, 50)) }
+        val unit2 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player2, Pos(50, 50 + CVUnit.Kind.Worker.attackRange + 1)) }
 
         before { Phase.BattlePhase.execute(stage()) }
 
@@ -259,7 +259,12 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
       }
       describe("攻撃範囲に敵がいるユニットの場合") {
         describe("敵1体") {
-          it("攻撃力ぶんのダメージを与える")(pending)
+          val unit1 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player1, Pos(50, 50)) }
+          val unit2 = let { stage().createUnit(CVUnit.Kind.Knight, stage().player2, Pos(50, 50 + CVUnit.Kind.Worker.attackRange)) }
+          before { Phase.BattlePhase.execute(stage()) }
+
+          it("攻撃力ぶんのダメージを与える") {
+          }
         }
         describe("1マスに複数(<=10)の敵がスタックされている場合") {
           it("範囲内のすべての敵に、攻撃力を敵の合計で割ったダメージ(切り捨て)を与える")(pending)

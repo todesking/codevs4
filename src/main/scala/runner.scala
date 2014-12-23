@@ -70,12 +70,8 @@ class Stage(
     assert(castle2 != null)
   }
 
-  def createCastle(owner: PlayerState, pos: Pos): CVUnit = {
-    registerUnit(new CVUnit(nextUnitID, CVUnit.Kind.Castle, owner, pos))
-  }
-
-  def createWorker(owner: PlayerState, pos: Pos): CVUnit = {
-    registerUnit(new CVUnit(nextUnitID, CVUnit.Kind.Worker, owner, pos))
+  def createUnit(kind: CVUnit.Kind, owner: PlayerState, pos: Pos): CVUnit = {
+    registerUnit(new CVUnit(nextUnitID, kind, owner, pos))
   }
 
   private[this] def registerUnit[A <: CVUnit](unit: A): A = {
@@ -115,8 +111,8 @@ object StepResult {
 object Stage {
   def minimalState(stageId: Int = 0, castle1Pos: Pos = Pos(0, 0), castle2Pos: Pos = Pos(99, 99)): Stage = {
     val stage = new Stage(stageId)
-    stage.createCastle(stage.player1, castle1Pos)
-    stage.createCastle(stage.player2, castle2Pos)
+    stage.createUnit(CVUnit.Kind.Castle, stage.player1, castle1Pos)
+    stage.createUnit(CVUnit.Kind.Castle, stage.player2, castle2Pos)
     stage.assertInitialized()
     stage
   }
@@ -124,12 +120,12 @@ object Stage {
     val stage = new Stage(stageId)
     val field = stage.field
 
-    val castle1 = stage.createCastle(stage.player1, field.randomPos(Pos(0, 0), 40))
-    val castle2 = stage.createCastle(stage.player2, field.randomPos(Pos(99, 99), 40))
+    val castle1 = stage.createUnit(CVUnit.Kind.Castle, stage.player1, field.randomPos(Pos(0, 0), 40))
+    val castle2 = stage.createUnit(CVUnit.Kind.Castle, stage.player2, field.randomPos(Pos(99, 99), 40))
 
     (1 to 5).foreach { _ =>
-      stage.createWorker(stage.player1, castle1.pos)
-      stage.createWorker(stage.player2, castle2.pos)
+      stage.createUnit(CVUnit.Kind.Worker, stage.player1, castle1.pos)
+      stage.createUnit(CVUnit.Kind.Worker, stage.player2, castle2.pos)
     }
 
     val resourceCond: Pos => Boolean = {pos =>
@@ -207,12 +203,11 @@ object CVUnit {
     val cost: Int,
     val attackRange: Int,
     val maxHp: Int,
-    val visibility: Int
+    val visibility: Int,
+    val creatables: Set[Kind] = Set.empty
   ) {
-    def create(stage: Stage, owner: PlayerState, pos: Pos): CVUnit
     def canCreate(kind: Kind): Boolean =
       creatables.contains(kind)
-    val creatables: Set[Kind] = Set.empty
   }
   object Kind {
     object Worker extends Kind(
@@ -221,10 +216,7 @@ object CVUnit {
       attackRange = 2,
       visibility = 10,
       cost = 40
-    ) {
-      override def create(stage: Stage, owner: PlayerState, pos: Pos) =
-        stage.createWorker(owner, pos)
-    }
+    )
     object Castle extends Kind(
       code = "-",
       maxHp = 50000,
@@ -232,11 +224,15 @@ object CVUnit {
       visibility = 10,
       cost = 0
     ) {
-      override def create(stage: Stage, owner: PlayerState, pos: Pos) =
-        stage.createCastle(owner, pos)
       override val creatables: Set[Kind] = Set(Worker)
     }
-    // TODO: more
+    object Knight extends Kind(
+      code = "1",
+      maxHp = 5000,
+      attackRange = 2,
+      visibility = 4,
+      cost = 20
+    )
   }
 }
 
@@ -246,7 +242,7 @@ object Phase {
       (sanitize(p1Command, stage.player1.playerId) ++ sanitize(p2Command, stage.player2.playerId)).foreach {
         case Command.Produce(unit, kind) =>
           if(unit.kind.canCreate(kind) && unit.owner.hasEnoughResource(kind.cost)) {
-            kind.create(stage, unit.owner, unit.pos)
+            stage.createUnit(kind, unit.owner, unit.pos)
             unit.owner.consumeResource(kind.cost)
           }
         case Command.Move(unit, direction) =>
