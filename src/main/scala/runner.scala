@@ -18,6 +18,11 @@ class PlayerState {
     require(n >= 0)
     resources += n
   }
+  def consumeResource(n: Int): Unit = {
+    require(n >= 0)
+    require(n <= resources)
+    resources -= n
+  }
 }
 
 case class Pos(x: Int, y: Int) {
@@ -163,6 +168,7 @@ case class Resource(pos: Pos)
 
 sealed abstract class CVUnit(val owner: PlayerState, val pos: Pos) {
   def maxHp: Int
+  val kind: CVUnit.Kind
   var hp: Int = maxHp
   def visibility: Int
   def isVisible(pos: Pos): Boolean =
@@ -170,24 +176,30 @@ sealed abstract class CVUnit(val owner: PlayerState, val pos: Pos) {
 }
 
 object CVUnit {
-  sealed abstract class Kind(code: String) {
+  sealed abstract class Kind(val code: String, val cost: Int) {
     def create(stage: Stage, owner: PlayerState, pos: Pos): CVUnit
   }
   object Kind {
-    object Worker extends Kind("0") {
+    object Worker extends Kind("0", 40) {
       override def create(stage: Stage, owner: PlayerState, pos: Pos) =
         stage.createWorker(owner, pos)
+    }
+    object Castle extends Kind("-", 0) {
+      override def create(stage: Stage, owner: PlayerState, pos: Pos) =
+        stage.createCastle(owner, pos)
     }
     // TODO: more
   }
 }
 
 case class Castle(override val owner: PlayerState, override val pos: Pos) extends CVUnit(owner, pos) {
+  override lazy val kind = CVUnit.Kind.Castle
   override lazy val maxHp = 50000
   override lazy val visibility = 10
 }
 
 case class Worker(override val owner: PlayerState, override val pos: Pos) extends CVUnit(owner, pos) {
+  override lazy val kind = CVUnit.Kind.Worker
   override lazy val maxHp = 2000
   override lazy val visibility = 10
 }
@@ -199,6 +211,7 @@ object Phase {
         case Command.Nop =>
         case Command.Production(unit, kind) =>
           kind.create(stage, unit.owner, unit.pos)
+          unit.owner.consumeResource(kind.cost)
       }
     }
   }

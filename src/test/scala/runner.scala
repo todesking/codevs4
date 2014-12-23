@@ -114,9 +114,11 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
           it("何もしない")(pending)
         }
       }
+
+      val initialResource = 100
       describe("生産コマンド") {
         describeSubject("生産可能", {
-          stage().player1.addResource(100)
+          stage().player1.addResource(initialResource)
           Phase.CommandPhase.execute(
             stage(),
             Seq(Command.Production(stage().castle1, CVUnit.Kind.Worker)),
@@ -127,9 +129,11 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
           it("コマンドを実行したユニットと同じ位置に新しいユニットが生成される") {
             val units = stage().field.unitsAt(stage().castle1.pos).filter(_ != stage().castle1)
             units.size shouldEqual 1
-            units.head.isInstanceOf[Worker] shouldEqual true
+            units.head.kind shouldEqual CVUnit.Kind.Worker
           }
-          it("生産したユニットのぶん資源が減る")(pending)
+          it("生産したユニットのぶん資源が減る") {
+            stage().player1.resources shouldEqual(initialResource - CVUnit.Kind.Worker.cost)
+          }
           it("生産されたユニットのHPは最大")(pending)
           it("生産されたユニットのIDはStageに設定された次ID")(pending)
           it("Stageの次IDは+1される")(pending)
@@ -146,6 +150,9 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
       }
       describe("1ユニットに対して複数のコマンド") {
         it("最初のコマンド以外無視される")(pending)
+      }
+      describe("指揮下にないユニットに対するコマンド") {
+        it("無視される")(pending)
       }
     }
     describe("戦闘フェーズ") {
