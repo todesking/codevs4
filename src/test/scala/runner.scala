@@ -309,7 +309,19 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
       }
     }
     describe("ユニット除外フェーズ") {
-      it("フィールド上に存在するHP<0のユニットは、取り除かれる")(pending)
+      val stage = let(Stage.minimalState())
+      before {
+        stage().units.size shouldEqual 2
+        val u = stage().createUnit(CVUnit.Kind.Worker, stage().player1, Pos(0, 0))
+        stage().units.size shouldEqual 3
+
+        u.hp = 0
+        Phase.SweepPhase.execute(stage())
+      }
+      it("フィールド上に存在するHP<0のユニットは、取り除かれる") {
+        stage().units.size shouldEqual 2
+        stage().units.filter(_.kind == CVUnit.Kind.Castle).size shouldEqual 2
+      }
     }
     describe("資源獲得フェーズ") {
       it("基本収入として+10される")(pending)

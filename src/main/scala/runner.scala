@@ -1,5 +1,7 @@
 package com.todesking.codevs4.runner
 
+import Ext._
+
 import scala.collection.mutable.ArrayBuffer
 
 sealed abstract class Direction
@@ -300,6 +302,13 @@ object Phase {
         defenders.foreach { defender =>
           defender.hp -= DamageTable(attacker.kind, defender.kind) / k
         }
+      }
+    }
+  }
+  object SweepPhase {
+    def execute(stage: Stage): Unit = {
+      stage.players.foreach { player =>
+        player.units.removeIf(_.hp <= 0)
       }
     }
   }
