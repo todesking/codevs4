@@ -79,16 +79,16 @@ class Field {
   }
 }
 
-sealed abstract class CVUnit(val owner: PlayerState, pos: Pos) {
+sealed abstract class CVUnit(val owner: PlayerState, val pos: Pos) {
   def maxHp: Int
   var hp: Int = maxHp
 }
 
-case class Castle(override val owner: PlayerState, pos: Pos) extends CVUnit(owner, pos) {
+case class Castle(override val owner: PlayerState, override val pos: Pos) extends CVUnit(owner, pos) {
   override lazy val maxHp = 50000
 }
 
-case class Worker(override val owner: PlayerState, pos: Pos) extends CVUnit(owner, pos) {
+case class Worker(override val owner: PlayerState, override val pos: Pos) extends CVUnit(owner, pos) {
   override lazy val maxHp = 2000
 }
 

@@ -32,12 +32,18 @@ class RunnerSpec extends FunSpecWithSubject with Matchers {
       it("プレイヤー2の城は(99, 99)の40マス圏内に配置される") {
         subject().player2.castle.pos.dist(Pos(99, 99)) should be <= 40
       }
+      it("初期ワーカーは各陣営の城と同じ場所に配置される") {
+        subject().players.foreach { player =>
+          player.units.filter(_.isInstanceOf[Worker]).foreach { worker =>
+            worker.pos shouldEqual player.castle.pos
+          }
+        }
+      }
       describeSubject("フィールド", subject().field) { subject =>
         it("100x100マスで構成される") {
           subject().width shouldEqual 100
           subject().height shouldEqual 100
         }
-        it("初期ワーカーは各陣営の城と同じ場所に配置される")(pending)
         it("資源マスが(0, 0)の99マス圏内に10, (99, 99)の99マス圏内に10配置される")(pending)
         it("資源マス同士は重ならない")(pending)
         it("資源マスは城の視野外に配置される")(pending)
