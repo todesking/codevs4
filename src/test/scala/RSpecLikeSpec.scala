@@ -5,20 +5,16 @@ import org.scalatest.FunSpec
 trait RSpecLikeSpec extends FunSpec {
   import org.scalatest.{Tag, Status, Args}
 
+  // definition-time
   private[this] var subjectStack = Seq.empty[SubjectAccess[_]]
+  // test-time
+  private[this] var currentSubjects = new ThreadLocal[Seq[SubjectAccess[_]]]
 
   class SubjectAccess[A](val generate: () => A) {
     val store = new ThreadLocal[Any]
 
     def reload(): Unit =
       store.set(generate())
-
-    def challange(n: Int)(fun: Int => Unit): Unit = {
-      (1 to n).foreach { i =>
-        reload()
-        fun(i)
-      }
-    }
 
     def apply(): A =
       store.get.asInstanceOf[A]
@@ -50,6 +46,7 @@ trait RSpecLikeSpec extends FunSpec {
       val subjects = subjectStack
       super.apply(specText, testTags:_*) {
         subjects.foreach(_.reload())
+        currentSubjects.set(subjects)
         testFun
       }
     }
@@ -73,4 +70,13 @@ trait RSpecLikeSpec extends FunSpec {
 
   protected def before(fun: => Unit): Unit =
     let(fun)
+
+  // test-time method
+  protected def challange(n: Int)(fun: Int => Unit): Unit = {
+    (1 to n).foreach { i =>
+      currentSubjects.get.foreach(_.reload())
+      fun(i)
+    }
+  }
+
 }
