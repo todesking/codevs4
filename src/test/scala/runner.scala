@@ -50,16 +50,24 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
           subject().width shouldEqual 100
           subject().height shouldEqual 100
         }
-        it("資源マスが(0, 0)の99マス圏内に10, (99, 99)の99マス圏内に10配置される(これ98マスが正解では)") {
+        it("資源マスが(0, 0)の99マス圏内に10, (99, 99)の99マス圏内に10配置される") {
           subject.challange(100) { _ =>
             val byDist = subject().resources.groupBy { r =>
-              if(r.pos.dist(Pos(0, 0)) <= 98) 0
-              else if(r.pos.dist(Pos(99, 99)) <= 98) 1
-              else 2
+              val topLeft = r.pos.dist(Pos(0, 0)) <= 98
+              val bottomRight = r.pos.dist(Pos(99, 99)) <= 98
+              (topLeft, bottomRight) match {
+                case (true, false) => 0
+                case (false, true) => 1
+                case (false, false) => 2 // On border
+                case (true, true) => assert(false)
+              }
             }
-            byDist.size shouldEqual 2
-            byDist(0).size shouldEqual 10
-            byDist(1).size shouldEqual 10
+            byDist.size should be >= 1
+            byDist.size should be <= 3
+            byDist.get(0).foreach(_.size should be <= 10)
+            byDist.get(1).foreach(_.size should be <= 10)
+            byDist.get(2).foreach(_.size should be <= 10)
+            byDist.values.map(_.size).sum shouldEqual 20
           }
         }
         it("資源マス同士は重ならない") {

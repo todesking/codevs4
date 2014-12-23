@@ -90,8 +90,8 @@ object Stage {
         !field.castle2.isVisible(pos)
     }
     (1 to 10).foreach { _ =>
-      field.addResource(field.randomPosThat(Pos(0, 0), 98)(resourceCond))
-      field.addResource(field.randomPosThat(Pos(99, 99), 98)(resourceCond))
+      field.addResource(field.randomPosThat(Pos(0, 0), 99)(resourceCond))
+      field.addResource(field.randomPosThat(Pos(99, 99), 99)(resourceCond))
     }
 
     stage
