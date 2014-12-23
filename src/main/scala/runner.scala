@@ -30,7 +30,7 @@ class Stage(
   val player1 = new PlayerState()
   val player2 = new PlayerState()
   val players = Seq(player1, player2)
-  val field = new Field()
+  val field = new Field(this)
 
   def createCastle(owner: PlayerState, pos: Pos): Castle = {
     registerUnit(Castle(owner, pos))
@@ -67,17 +67,20 @@ object Stage {
     }
 
     (1 to 10).foreach { _ =>
-      field.addResource(field.randomNoResourcePos(Pos(0, 0), 99))
-      field.addResource(field.randomNoResourcePos(Pos(99, 99), 99))
+      field.addResource(field.randomPosThat(Pos(0, 0), 98)(!field.hasResourceAt(_)))
+      field.addResource(field.randomPosThat(Pos(99, 99), 98)(!field.hasResourceAt(_)))
     }
 
     stage
   }
 }
 
-class Field {
+class Field(val stage: Stage) {
   val width: Int = 100
   val height: Int = 100
+
+  def castle1: Castle = stage.player1.castle
+  def castle2: Castle = stage.player2.castle
 
   def randomPos(center: Pos, dist: Int)(implicit rand: CVRandom): Pos = {
     val x = rand.nextInt(Math.max(center.x - dist, 0), Math.min(center.x + dist, width - 1))
@@ -86,9 +89,9 @@ class Field {
     Pos(x, y)
   }
 
-  def randomNoResourcePos(center: Pos, dist: Int)(implicit rand: CVRandom): Pos = {
+  def randomPosThat(center: Pos, dist: Int)(that: Pos => Boolean)(implicit rand: CVRandom): Pos = {
     var pos = randomPos(center, dist)
-    while(hasResourceAt(pos))
+    while(!that(pos))
       pos = randomPos(center, dist)
     pos
   }
@@ -110,14 +113,19 @@ case class Resource(pos: Pos)
 sealed abstract class CVUnit(val owner: PlayerState, val pos: Pos) {
   def maxHp: Int
   var hp: Int = maxHp
+  def visibility: Int
+  def isVisible(pos: Pos): Boolean =
+    this.pos.dist(pos) <= visibility
 }
 
 case class Castle(override val owner: PlayerState, override val pos: Pos) extends CVUnit(owner, pos) {
   override lazy val maxHp = 50000
+  override lazy val visibility = 10
 }
 
 case class Worker(override val owner: PlayerState, override val pos: Pos) extends CVUnit(owner, pos) {
   override lazy val maxHp = 2000
+  override lazy val visibility = 10
 }
 
 

@@ -44,10 +44,10 @@ class RunnerSpec extends FunSpecWithSubject with Matchers {
           subject().width shouldEqual 100
           subject().height shouldEqual 100
         }
-        it("資源マスが(0, 0)の99マス圏内に10, (99, 99)の99マス圏内に10配置される") {
+        it("資源マスが(0, 0)の99マス圏内に10, (99, 99)の99マス圏内に10配置される(これ98マスが正解では)") {
           val byDist = subject().resources.groupBy { r =>
-            if(r.pos.dist(Pos(0, 0)) <= 99) 0
-            else if(r.pos.dist(Pos(99, 99)) <= 99) 1
+            if(r.pos.dist(Pos(0, 0)) <= 98) 0
+            else if(r.pos.dist(Pos(99, 99)) <= 98) 1
             else 2
           }
           byDist.size shouldEqual 2
@@ -57,7 +57,12 @@ class RunnerSpec extends FunSpecWithSubject with Matchers {
         it("資源マス同士は重ならない") {
           subject().resources.groupBy(_.pos).size shouldEqual subject().resources.size
         }
-        it("資源マスは城の視野外に配置される")(pending)
+        it("資源マスは城の視野外に配置される") {
+          subject().resources.foreach { resource =>
+            subject().castle1.isVisible(resource.pos) shouldEqual false
+            subject().castle2.isVisible(resource.pos) shouldEqual false
+          }
+        }
       }
     }
     describe("ターン進行") {
