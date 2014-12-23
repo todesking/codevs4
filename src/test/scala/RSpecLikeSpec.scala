@@ -2,7 +2,7 @@ package com.todesking.codevs4.runner
 
 import org.scalatest.FunSpec
 
-trait FunSpecWithSubject extends FunSpec {
+trait RSpecLikeSpec extends FunSpec {
   import org.scalatest.{Tag, Status, Args}
 
   var subjectStack = Seq.empty[(() => Any, SubjectAccess[_])]

@@ -2,7 +2,7 @@ package com.todesking.codevs4.runner
 
 import org.scalatest.{FunSpec, Matchers}
 
-class RunnerSpec extends FunSpecWithSubject with Matchers {
+class RunnerSpec extends RSpecLikeSpec with Matchers {
   implicit val rand = new CVRandom
   describe("ステージ(Stage)") {
     describeSubject("初期状態", Stage.initialState(99)) { subject =>
