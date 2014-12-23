@@ -109,11 +109,29 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
       val stage = let(Stage.minimalState())
 
       describe("移動コマンド") {
+        val worker1 = let { stage().createWorker(stage().player1, Pos(0, 0)) }
+        val worker2 = let { stage().createWorker(stage().player1, Pos(99, 99)) }
+
+        before {
+          Phase.CommandPhase.execute(
+            stage(),
+            Seq(
+              Command.Move(worker1(), Direction.Down),
+              Command.Move(worker2(), Direction.Right)
+            ),
+            Seq()
+          )
+        }
+
         describe("移動可能") {
-          it("ユニットが指示された方向に移動する")(pending)
+          it("ユニットが指示された方向に移動する") {
+            worker1().pos shouldEqual Pos(0, 1)
+          }
         }
         describe("移動不能()") {
-          it("何もしない")(pending)
+          it("何もしない") {
+            worker2().pos shouldEqual Pos(99, 99)
+          }
         }
       }
 

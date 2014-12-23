@@ -71,7 +71,6 @@ trait RSpecLikeSpec extends FunSpec {
     }
   }
 
-  protected def before(fun: => Unit): Unit = {
+  protected def before(fun: => Unit): Unit =
     let(fun)
-  }
 }

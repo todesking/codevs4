@@ -2,6 +2,14 @@ package com.todesking.codevs4.runner
 
 import scala.collection.mutable.ArrayBuffer
 
+sealed abstract class Direction
+object Direction {
+  case object Up extends Direction
+  case object Down extends Direction
+  case object Left extends Direction
+  case object Right extends Direction
+}
+
 class CVRandom {
   val random = new scala.util.Random
 
@@ -31,6 +39,13 @@ case class Pos(x: Int, y: Int) {
   def dist(rhs: Pos): Int = {
     Math.abs(this.x - rhs.x) + Math.abs(this.y - rhs.y)
   }
+  def move(d: Direction): Pos =
+    d match {
+      case Direction.Up => Pos(x, y - 1)
+      case Direction.Down => Pos(x, y + 1)
+      case Direction.Left => Pos(x - 1, y)
+      case Direction.Right => Pos(x + 1, y)
+    }
 }
 
 class Stage(
@@ -56,11 +71,11 @@ class Stage(
   }
 
   def createCastle(owner: PlayerState, pos: Pos): Castle = {
-    registerUnit(Castle(nextUnitID, owner, pos))
+    registerUnit(new Castle(nextUnitID, owner, pos))
   }
 
   def createWorker(owner: PlayerState, pos: Pos): Worker = {
-    registerUnit(Worker(nextUnitID, owner, pos))
+    registerUnit(new Worker(nextUnitID, owner, pos))
   }
 
   private[this] def registerUnit[A <: CVUnit](unit: A): A = {
@@ -86,6 +101,7 @@ sealed abstract class Command(val unit: CVUnit) {
 }
 object Command {
   case class Produce(override val unit: CVUnit, kind: CVUnit.Kind) extends Command(unit)
+  case class Move(override val unit: CVUnit, direction: Direction) extends Command(unit)
 }
 
 sealed abstract class StepResult
@@ -154,6 +170,9 @@ class Field(val stage: Stage) {
     pos
   }
 
+  def validPos(pos: Pos): Boolean =
+    0 <= pos.x && pos.x < width && 0 <= pos.y && pos.y < height
+
   def hasResourceAt(pos: Pos): Boolean = {
     resources.exists(_.pos == pos)
   }
@@ -171,7 +190,7 @@ class Field(val stage: Stage) {
 
 case class Resource(pos: Pos)
 
-sealed abstract class CVUnit(val id: Int, val owner: PlayerState, val pos: Pos) {
+sealed abstract class CVUnit(val id: Int, val owner: PlayerState, var pos: Pos) {
   def maxHp: Int
   val kind: CVUnit.Kind
   var hp: Int = maxHp
@@ -201,13 +220,13 @@ object CVUnit {
   }
 }
 
-case class Castle(override val id: Int, override val owner: PlayerState, override val pos: Pos) extends CVUnit(id, owner, pos) {
+class Castle(id: Int, owner: PlayerState, pos: Pos) extends CVUnit(id, owner, pos) {
   override lazy val kind = CVUnit.Kind.Castle
   override lazy val maxHp = 50000
   override lazy val visibility = 10
 }
 
-case class Worker(override val id: Int, override val owner: PlayerState, override val pos: Pos) extends CVUnit(id, owner, pos) {
+class Worker(id: Int, owner: PlayerState, pos: Pos) extends CVUnit(id, owner, pos) {
   override lazy val kind = CVUnit.Kind.Worker
   override lazy val maxHp = 2000
   override lazy val visibility = 10
@@ -221,6 +240,11 @@ object Phase {
           if(unit.kind.canCreate(kind) && unit.owner.hasEnoughResource(kind.cost)) {
             kind.create(stage, unit.owner, unit.pos)
             unit.owner.consumeResource(kind.cost)
+          }
+        case Command.Move(unit, direction) =>
+          val newPos = unit.pos.move(direction)
+          if(stage.field.validPos(newPos)) {
+            unit.pos = newPos
           }
       }
     }
