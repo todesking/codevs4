@@ -90,7 +90,7 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
         val p1Command = Seq()
         val p2Command = Seq()
         subject().turn shouldEqual 0
-        subject().step(p1Command, p2Command) shouldEqual TurnResult.InProgress
+        subject().executeTurn(p1Command, p2Command) shouldEqual TurnResult.InProgress
         subject().turn shouldEqual 1
       }
     }

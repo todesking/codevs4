@@ -91,7 +91,7 @@ class Stage(
     unit
   }
 
-  def step(p1Command: Seq[Command], p2Command: Seq[Command]): TurnResult = {
+  def executeTurn(p1Command: Seq[Command], p2Command: Seq[Command]): TurnResult = {
     turn += 1
     TurnResult.InProgress
   }
