@@ -316,4 +316,11 @@ object Phase {
       }
     }
   }
+  object ResourcingPhase {
+    def execute(stage: Stage): Unit = {
+      stage.players.foreach { player =>
+        player.resources += 10
+      }
+    }
+  }
 }

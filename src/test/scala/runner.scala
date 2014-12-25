@@ -338,7 +338,20 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
       }
     }
     describe("資源獲得フェーズ") {
-      it("基本収入として+10される")(pending)
+      val stage = let { Stage.minimalState() }
+      val resourcePos = Pos(50, 50)
+      before {
+        stage().field.addResource(resourcePos)
+      }
+      describe("ワーカーが資源上にいないとき") {
+        before {
+          stage().player1.resources shouldEqual 0
+          Phase.ResourcingPhase.execute(stage())
+        }
+        it("基本収入として+10される") {
+          stage().player1.resources shouldEqual 10
+        }
+      }
       it("資源上にいるワーカーの数に応じて資源が増える")(pending)
       it("同一の資源上にいる自軍ワーカーの数>5だったら5とみなされる")(pending)
     }
