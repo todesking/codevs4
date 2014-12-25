@@ -91,9 +91,9 @@ class Stage(
     unit
   }
 
-  def step(p1Command: Seq[Command], p2Command: Seq[Command]): StepResult = {
+  def step(p1Command: Seq[Command], p2Command: Seq[Command]): TurnResult = {
     turn += 1
-    StepResult.InProgress
+    TurnResult.InProgress
   }
 }
 
@@ -104,12 +104,12 @@ object Command {
   case class Move(override val unit: CVUnit, direction: Direction) extends Command(unit)
 }
 
-sealed abstract class StepResult
-object StepResult {
-  case object InProgress extends StepResult
-  case object P1Win extends StepResult
-  case object P2Win extends StepResult
-  case object Draw extends StepResult
+sealed abstract class TurnResult
+object TurnResult {
+  case object InProgress extends TurnResult
+  case object P1Win extends TurnResult
+  case object P2Win extends TurnResult
+  case object Draw extends TurnResult
 }
 
 object Stage {
@@ -331,6 +331,11 @@ object Phase {
           player.resources += Math.min(workers.size, 5)
         }
       }
+    }
+  }
+  object FinishingPhase {
+    def result(stage: Stage): TurnResult = {
+      TurnResult.InProgress
     }
   }
 }

@@ -90,7 +90,7 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
         val p1Command = Seq()
         val p2Command = Seq()
         subject().turn shouldEqual 0
-        subject().step(p1Command, p2Command) shouldEqual StepResult.InProgress
+        subject().step(p1Command, p2Command) shouldEqual TurnResult.InProgress
         subject().turn shouldEqual 1
       }
     }
@@ -383,8 +383,12 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
       }
     }
     describe("終了フェーズ") {
+      val stage = let { Stage.minimalState() }
       describe("1000ターン以内、両者の城HP>=0") {
-        it("試合中と判定される")(pending)
+        val result = let { Phase.FinishingPhase.result(stage()) }
+        it("試合中と判定される") {
+          result() shouldEqual TurnResult.InProgress
+        }
       }
       describe("P1の城HPのみ<=0") {
         it("P2の勝ちと判定される")(pending)
