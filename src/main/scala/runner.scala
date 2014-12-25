@@ -327,8 +327,8 @@ object Phase {
         player.resources += basicIncome
 
         stage.field.resources.foreach { resource =>
-          player.resources +=
-            stage.field.unitsAt(resource.pos, owner = player, kind = CVUnit.Kind.Worker).size
+          val workers = stage.field.unitsAt(resource.pos, owner = player, kind = CVUnit.Kind.Worker)
+          player.resources += Math.min(workers.size, 5)
         }
       }
     }

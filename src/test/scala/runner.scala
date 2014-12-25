@@ -353,7 +353,7 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
           stage().player1.resources shouldEqual 10
         }
       }
-      describe("ワーカーが資源上にいる(<5)") {
+      describe("ワーカーが資源上にいる(<=5)") {
         before {
           stage().createUnit(CVUnit.Kind.Worker, stage().player1, resourcePos)
           (1 to 5).foreach { _ =>
@@ -366,7 +366,21 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
           stage().player2.resources shouldEqual 15
         }
       }
-      it("同一の資源上にいる自軍ワーカーの数>5だったら5とみなされる")(pending)
+      describe("同一資源上のワーカーの数>5") {
+        before {
+          (1 to 6).foreach { _ =>
+            stage().createUnit(CVUnit.Kind.Worker, stage().player1, resourcePos)
+          }
+          (1 to 10).foreach { _ =>
+            stage().createUnit(CVUnit.Kind.Worker, stage().player2, resourcePos)
+          }
+          Phase.ResourcingPhase.execute(stage())
+        }
+        it("ワーカーの数が5とみなされる") {
+          stage().player1.resources shouldEqual 15
+          stage().player2.resources shouldEqual 15
+        }
+      }
     }
     describe("終了フェーズ") {
       describe("1000ターン以内、両者の城HP>=0") {
