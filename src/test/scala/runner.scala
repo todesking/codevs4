@@ -345,6 +345,7 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
       }
       describe("ワーカーが資源上にいないとき") {
         before {
+          stage().createUnit(CVUnit.Kind.Worker, stage().player1, Pos(0, 0))
           stage().player1.resources shouldEqual 0
           Phase.ResourcingPhase.execute(stage())
         }
@@ -352,7 +353,19 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
           stage().player1.resources shouldEqual 10
         }
       }
-      it("資源上にいるワーカーの数に応じて資源が増える")(pending)
+      describe("ワーカーが資源上にいる(<5)") {
+        before {
+          stage().createUnit(CVUnit.Kind.Worker, stage().player1, resourcePos)
+          (1 to 5).foreach { _ =>
+            stage().createUnit(CVUnit.Kind.Worker, stage().player2, resourcePos)
+          }
+          Phase.ResourcingPhase.execute(stage())
+        }
+        it("資源上にいるワーカーの数に応じて資源が増える") {
+          stage().player1.resources shouldEqual 11
+          stage().player2.resources shouldEqual 15
+        }
+      }
       it("同一の資源上にいる自軍ワーカーの数>5だったら5とみなされる")(pending)
     }
     describe("終了フェーズ") {

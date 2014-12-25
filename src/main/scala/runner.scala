@@ -182,6 +182,10 @@ class Field(val stage: Stage) {
 
   def unitsAt(pos: Pos): Seq[CVUnit] =
     units.filter(_.pos == pos)
+  def unitsAt(pos: Pos, owner: PlayerState): Traversable[CVUnit] =
+    unitsAt(pos).filter(_.owner == owner)
+  def unitsAt(pos: Pos, owner: PlayerState, kind: CVUnit.Kind): Traversable[CVUnit] =
+    unitsAt(pos, owner).filter(_.kind == kind)
 
   val resources = new ArrayBuffer[Resource]
 
@@ -317,9 +321,15 @@ object Phase {
     }
   }
   object ResourcingPhase {
+    val basicIncome = 10
     def execute(stage: Stage): Unit = {
       stage.players.foreach { player =>
-        player.resources += 10
+        player.resources += basicIncome
+
+        stage.field.resources.foreach { resource =>
+          player.resources +=
+            stage.field.unitsAt(resource.pos, owner = player, kind = CVUnit.Kind.Worker).size
+        }
       }
     }
   }
