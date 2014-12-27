@@ -35,6 +35,8 @@ class PlayerState(val playerId: Int) {
     require(hasEnoughResource(n))
     resources -= n
   }
+  def visibilities(): Traversable[(Pos, Int)] =
+    units.groupBy(_.pos).map { case (pos, units) => (pos, units.map(_.visibility).max) }
 }
 
 case class Pos(x: Int, y: Int) {
@@ -48,8 +50,15 @@ case class Pos(x: Int, y: Int) {
       case Direction.Left => Pos(x - 1, y)
       case Direction.Right => Pos(x + 1, y)
     }
+  def ranged(radius: Int): RangedPos =
+    RangedPos(this, radius)
   override def toString() =
     s"($x, $y)"
+}
+
+case class RangedPos(center: Pos, radius: Int) {
+  def contains(pos: Pos): Boolean =
+    center.dist(pos) <= radius
 }
 
 case class VisibleState(
@@ -118,9 +127,20 @@ class Stage(
       turn = this.turn,
       resources = player.resources,
       playerUnits = player.units,
-      opponentUnits = opponent.units,
-      resourceLocations = field.resources.map(_.pos)
+      opponentUnits = visibleUnits(player, opponent),
+      resourceLocations = visibleResources(player).toSeq
     )
+  }
+
+  def visibleUnits(viewer: PlayerState, owner: PlayerState): Seq[CVUnit] = {
+    viewer.visibilities.
+      flatMap { case (pos, visibility) => field.unitsWithin(pos, visibility, owner) }.
+      toSet.toSeq.sortBy[Int](_.id)
+  }
+  def visibleResources(viewer: PlayerState): Traversable[Pos] = {
+    viewer.visibilities.flatMap { case (pos, visibility) =>
+      field.resources.filter { r => pos.ranged(visibility).contains(r.pos) }.map(_.pos)
+    }.toSet
   }
 }
 
@@ -184,7 +204,9 @@ class Field(val stage: Stage) {
   def units: Seq[CVUnit] = castle1.owner.units ++ castle2.owner.units
 
   def unitsWithin(pos: Pos, dist: Int): Seq[CVUnit] =
-    units.filter { unit => pos.dist(unit.pos) <= dist }
+    units.filter { unit => pos.ranged(dist).contains(unit.pos) }
+  def unitsWithin(pos: Pos, dist: Int, owner: PlayerState): Seq[CVUnit] =
+    unitsWithin(pos, dist).filter(_.owner == owner)
 
   def randomPos(center: Pos, dist: Int)(implicit rand: CVRandom): Pos = {
     val x = rand.nextInt(Math.max(center.x - dist, 0), Math.min(center.x + dist, width - 1))

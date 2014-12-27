@@ -119,8 +119,8 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
         stage().field.addResource(Pos(90, 90))
       }
       val w1 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player1, Pos(51, 51)) }
-      val w20 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player2, Pos(51, 55)) }
-      val w21 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player2, Pos(56, 51)) }
+      val w20 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player2, Pos(51, 61)) }
+      val w21 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player2, Pos(62, 51)) }
       it("現在の状態から、各プレイヤーに対するインプットデータを生成できる(P1)") {
         inside(stage().visibleStateFor(1)) {
           case VisibleState(stageId, turn, resources, playerUnits, opponentUnits, resourceLocations) =>
