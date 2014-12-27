@@ -1,10 +1,13 @@
-package com.todesking.codevs4.runner
+package com.todesking.codevs4.test
 
 import org.scalatest.{FunSpec, Matchers}
 import org.scalatest.Inside._
 
+import com.todesking.codevs4.runner._
+import com.todesking.codevs4.interface._
+
 class RunnerSpec extends RSpecLikeSpec with Matchers {
-  implicit val rand = new CVRandom
+  implicit val rand = new RandomSource
   describe("ステージ(Stage)") {
     describeSubject("初期状態", Stage.initialState(99)) { subject =>
       it("ステージIDは指定されたものである") { subject().id shouldEqual 99 }
@@ -16,8 +19,8 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
       }
       it("各陣営は城1, ワーカー5が与えられる") {
         subject().players.foreach { player =>
-          player.units.filter(_.kind == CVUnit.Kind.Castle).size shouldEqual 1
-          player.units.filter(_.kind == CVUnit.Kind.Worker).size shouldEqual 5
+          player.units.filter(_.kind == CVUnitKind.Castle).size shouldEqual 1
+          player.units.filter(_.kind == CVUnitKind.Worker).size shouldEqual 5
         }
       }
       it("各陣営のユニットのHPは最大") {
@@ -40,7 +43,7 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
       it("初期ワーカーは各陣営の城と同じ場所に配置される") {
         challange(10) { _ =>
           subject().players.foreach { player =>
-            player.units.filter(_.kind == CVUnit.Kind.Worker).foreach { worker =>
+            player.units.filter(_.kind == CVUnitKind.Worker).foreach { worker =>
               worker.pos shouldEqual player.castle.pos
             }
           }
@@ -90,10 +93,10 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
       it("両者の入力を受け取ってターンを進め、結果を返す") {
         subject().player1.resources += 1000
         subject().field.addResource(Pos(50, 50))
-        val w1 = subject().createUnit(CVUnit.Kind.Worker, subject().player1, Pos(50, 50))
-        val w2 = subject().createUnit(CVUnit.Kind.Worker, subject().player2, Pos(51, 51))
+        val w1 = subject().createUnit(CVUnitKind.Worker, subject().player1, Pos(50, 50))
+        val w2 = subject().createUnit(CVUnitKind.Worker, subject().player2, Pos(51, 51))
         val p1Command = Seq(
-          Command.Produce(w1.id, CVUnit.Kind.Village)
+          Command.Produce(w1.id, CVUnitKind.Village)
         )
         val p2Command = Seq(
           Command.Move(w2.id, Direction.Right)
@@ -118,9 +121,9 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
         stage().field.addResource(Pos(50, 50))
         stage().field.addResource(Pos(90, 90))
       }
-      val w1 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player1, Pos(51, 51)) }
-      val w20 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player2, Pos(51, 61)) }
-      val w21 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player2, Pos(62, 51)) }
+      val w1 = let { stage().createUnit(CVUnitKind.Worker, stage().player1, Pos(51, 51)) }
+      val w20 = let { stage().createUnit(CVUnitKind.Worker, stage().player2, Pos(51, 61)) }
+      val w21 = let { stage().createUnit(CVUnitKind.Worker, stage().player2, Pos(62, 51)) }
       it("プレイヤー1に対するデータを生成できる") {
         inside(stage().visibleStateFor(1)) {
           case VisibleState(stageId, turn, resources, playerUnits, opponentUnits, resourceLocations) =>
@@ -159,10 +162,10 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
       val stage = let(Stage.minimalState())
 
       describe("移動コマンド") {
-        val worker1 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player1, Pos(0, 0)) }
-        val worker2 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player1, Pos(99, 99)) }
-        val worker3 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player2, Pos(99, 99)) }
-        val village = let { stage().createUnit(CVUnit.Kind.Village, stage().player1, Pos(50, 50)) }
+        val worker1 = let { stage().createUnit(CVUnitKind.Worker, stage().player1, Pos(0, 0)) }
+        val worker2 = let { stage().createUnit(CVUnitKind.Worker, stage().player1, Pos(99, 99)) }
+        val worker3 = let { stage().createUnit(CVUnitKind.Worker, stage().player2, Pos(99, 99)) }
+        val village = let { stage().createUnit(CVUnitKind.Village, stage().player1, Pos(50, 50)) }
 
         before {
           Phase.CommandPhase.execute(
@@ -208,7 +211,7 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
             stage().player1.addResource(initialResource)
             Phase.CommandPhase.execute(
               stage(),
-              Seq(Command.Produce(stage().castle1.id, CVUnit.Kind.Worker)),
+              Seq(Command.Produce(stage().castle1.id, CVUnitKind.Worker)),
               Seq()
             )
           }
@@ -219,11 +222,11 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
             val units = stage().field.unitsAt(stage().castle1.pos).filter(_ != stage().castle1)
             stage().units.size shouldEqual initialUnitSize() + 1
             createdUnits().size shouldEqual 1
-            createdUnits().head.kind shouldEqual CVUnit.Kind.Worker
+            createdUnits().head.kind shouldEqual CVUnitKind.Worker
             createdUnits().head.pos shouldEqual stage().castle1.pos
           }
           it("生産したユニットのぶん資源が減る") {
-            stage().player1.resources shouldEqual(initialResource - CVUnit.Kind.Worker.cost)
+            stage().player1.resources shouldEqual(initialResource - CVUnitKind.Worker.cost)
           }
           it("生産されたユニットのHPは最大") {
             createdUnits().head.hp shouldEqual createdUnits().head.maxHp
@@ -240,7 +243,7 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
             stage().player1.addResource(initialResource)
             Phase.CommandPhase.execute(
               stage(),
-              Seq(Command.Produce(stage().castle1.id, CVUnit.Kind.Castle)),
+              Seq(Command.Produce(stage().castle1.id, CVUnitKind.Castle)),
               Seq()
             )
           }
@@ -253,7 +256,7 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
             stage().player1.addResource(0)
             Phase.CommandPhase.execute(
               stage(),
-              Seq(Command.Produce(stage().castle1.id, CVUnit.Kind.Worker)),
+              Seq(Command.Produce(stage().castle1.id, CVUnitKind.Worker)),
               Seq()
             )
           }
@@ -281,9 +284,9 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
           Phase.CommandPhase.execute(
             stage(),
             Seq(
-              Command.Produce(stage().castle1.id, CVUnit.Kind.Worker),
-              Command.Produce(stage().castle1.id, CVUnit.Kind.Worker),
-              Command.Produce(stage().castle1.id, CVUnit.Kind.Worker)
+              Command.Produce(stage().castle1.id, CVUnitKind.Worker),
+              Command.Produce(stage().castle1.id, CVUnitKind.Worker),
+              Command.Produce(stage().castle1.id, CVUnitKind.Worker)
             ),
             Seq()
           )
@@ -298,7 +301,7 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
           stage().player2.addResource(initialResource)
           Phase.CommandPhase.execute(
             stage(),
-            Seq(Command.Produce(stage().castle2.id, CVUnit.Kind.Worker)),
+            Seq(Command.Produce(stage().castle2.id, CVUnitKind.Worker)),
             Seq()
           )
         }
@@ -312,7 +315,7 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
           stage().castle1.hp = 0
           Phase.CommandPhase.execute(
             stage(),
-            Seq(Command.Produce(stage().castle1.id, CVUnit.Kind.Worker)),
+            Seq(Command.Produce(stage().castle1.id, CVUnitKind.Worker)),
             Seq()
           )
         }
@@ -324,8 +327,8 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
     describe("戦闘フェーズ(Phase.Battle)") {
       val stage = let(Stage.minimalState())
       describe("ユニットの攻撃範囲に敵がいない場合") {
-        val unit1 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player1, Pos(50, 50)) }
-        val unit2 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player2, Pos(50, 50 + 20)) }
+        val unit1 = let { stage().createUnit(CVUnitKind.Worker, stage().player1, Pos(50, 50)) }
+        val unit2 = let { stage().createUnit(CVUnitKind.Worker, stage().player2, Pos(50, 50 + 20)) }
 
         before { Phase.BattlePhase.execute(stage()) }
 
@@ -336,8 +339,8 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
       }
       describe("攻撃範囲に敵がいるユニットの場合") {
         describe("敵1体") {
-          val worker = let { stage().createUnit(CVUnit.Kind.Worker, stage().player1, Pos(50, 50)) }
-          val knight = let { stage().createUnit(CVUnit.Kind.Knight, stage().player2, Pos(50, 50 + 1)) }
+          val worker = let { stage().createUnit(CVUnitKind.Worker, stage().player1, Pos(50, 50)) }
+          val knight = let { stage().createUnit(CVUnitKind.Knight, stage().player2, Pos(50, 50 + 1)) }
           before { Phase.BattlePhase.execute(stage()) }
 
           it("攻撃力ぶんのダメージを与える") {
@@ -345,12 +348,12 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
           }
         }
         describe("1マスに複数(<=10)の敵がスタックされている場合") {
-          val worker = let { stage().createUnit(CVUnit.Kind.Worker, stage().player1, Pos(50, 50)) }
+          val worker = let { stage().createUnit(CVUnitKind.Worker, stage().player1, Pos(50, 50)) }
           val knights = let {
             (1 to 10).map { _ =>
-              stage().createUnit(CVUnit.Kind.Knight, stage().player2, Pos(50, 50 + 1))
+              stage().createUnit(CVUnitKind.Knight, stage().player2, Pos(50, 50 + 1))
             } ++ Seq(
-              stage().createUnit(CVUnit.Kind.Knight, stage().player2, Pos(50 + 1, 50))
+              stage().createUnit(CVUnitKind.Knight, stage().player2, Pos(50 + 1, 50))
             )
           }
 
@@ -363,12 +366,12 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
           }
         }
         describe("1マスに複数(>10)の敵がスタックされている場合") {
-          val worker = let { stage().createUnit(CVUnit.Kind.Worker, stage().player1, Pos(50, 50)) }
+          val worker = let { stage().createUnit(CVUnitKind.Worker, stage().player1, Pos(50, 50)) }
           val knights = let {
             (1 to 100).map { _ =>
-              stage().createUnit(CVUnit.Kind.Knight, stage().player2, Pos(50, 50 + 1))
+              stage().createUnit(CVUnitKind.Knight, stage().player2, Pos(50, 50 + 1))
             } ++ Seq(
-              stage().createUnit(CVUnit.Kind.Knight, stage().player2, Pos(50 + 1, 50))
+              stage().createUnit(CVUnitKind.Knight, stage().player2, Pos(50 + 1, 50))
             )
           }
 
@@ -386,7 +389,7 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
       val stage = let(Stage.minimalState())
       before {
         stage().units.size shouldEqual 2
-        val u = stage().createUnit(CVUnit.Kind.Worker, stage().player1, Pos(0, 0))
+        val u = stage().createUnit(CVUnitKind.Worker, stage().player1, Pos(0, 0))
         stage().units.size shouldEqual 3
 
         u.hp = 0
@@ -394,7 +397,7 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
       }
       it("フィールド上に存在するHP<0のユニットは、取り除かれる") {
         stage().units.size shouldEqual 2
-        stage().units.filter(_.kind == CVUnit.Kind.Castle).size shouldEqual 2
+        stage().units.filter(_.kind == CVUnitKind.Castle).size shouldEqual 2
       }
     }
     describe("資源獲得フェーズ") {
@@ -405,7 +408,7 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
       }
       describe("ワーカーが資源上にいないとき") {
         before {
-          stage().createUnit(CVUnit.Kind.Worker, stage().player1, Pos(0, 0))
+          stage().createUnit(CVUnitKind.Worker, stage().player1, Pos(0, 0))
           stage().player1.resources shouldEqual 0
           Phase.ResourcingPhase.execute(stage())
         }
@@ -415,9 +418,9 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
       }
       describe("ワーカーが資源上にいる(<=5)") {
         before {
-          stage().createUnit(CVUnit.Kind.Worker, stage().player1, resourcePos)
+          stage().createUnit(CVUnitKind.Worker, stage().player1, resourcePos)
           (1 to 5).foreach { _ =>
-            stage().createUnit(CVUnit.Kind.Worker, stage().player2, resourcePos)
+            stage().createUnit(CVUnitKind.Worker, stage().player2, resourcePos)
           }
           Phase.ResourcingPhase.execute(stage())
         }
@@ -429,10 +432,10 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
       describe("同一資源上のワーカーの数>5") {
         before {
           (1 to 6).foreach { _ =>
-            stage().createUnit(CVUnit.Kind.Worker, stage().player1, resourcePos)
+            stage().createUnit(CVUnitKind.Worker, stage().player1, resourcePos)
           }
           (1 to 10).foreach { _ =>
-            stage().createUnit(CVUnit.Kind.Worker, stage().player2, resourcePos)
+            stage().createUnit(CVUnitKind.Worker, stage().player2, resourcePos)
           }
           Phase.ResourcingPhase.execute(stage())
         }
