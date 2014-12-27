@@ -6,6 +6,35 @@ import Ext._
 
 import scala.collection.mutable.ArrayBuffer
 
+trait Logger {
+  def turnStart(stage: Stage, commands1: Seq[Command], commands2: Seq[Command]): Unit = ()
+  def commandIgnored(playerId: Int, command: Command, message: String): Unit = ()
+}
+object Logger {
+  val Null = new Logger {
+  }
+  val ShowError = new Logger {
+    override def commandIgnored(playerId: Int, command: Command, message: String): Unit = {
+      println(s"Player ${playerId}: command ignored: ${command}, message=${message}")
+    }
+  }
+  val ShowAll = new Logger {
+    override def turnStart(stage: Stage, commands1: Seq[Command], commands2: Seq[Command]): Unit = {
+      val h = "[INFO]"
+      println(s"$h STAGE ${stage.id}, Turn ${stage.turn}")
+      stage.players.zip(Seq(commands1, commands2)).foreach { case (p, commands) =>
+        println(s"$h   Player ${p.playerId}, Resources ${p.resources} Castle ${p.castle.hpString}")
+        commands.foreach { c =>
+          println(s"$h     ${c}")
+        }
+      }
+    }
+    override def commandIgnored(playerId: Int, command: Command, message: String): Unit = {
+      println(s"[WARN] Player ${playerId}: command ignored: ${command}, message=${message}")
+    }
+  }
+}
+
 class PlayerState(val playerId: Int, val coordinateSystem: CoordinateSystem) {
   var resources: Int = 0
   var castle: CVUnit = null
@@ -66,7 +95,8 @@ class Stage(
     unit
   }
 
-  def executeTurn(p1Command: Seq[Command], p2Command: Seq[Command]): TurnResult = {
+  def executeTurn(p1Command: Seq[Command], p2Command: Seq[Command])(implicit logger: Logger): TurnResult = {
+    logger.turnStart(this, p1Command, p2Command)
     Phase.CommandPhase.execute(this, p1Command, p2Command)
     Phase.BattlePhase.execute(this)
     Phase.SweepPhase.execute(this)
@@ -198,15 +228,19 @@ case class Resource(pos: Pos)
 
 object Phase {
   object CommandPhase {
-    def execute(stage: Stage, p1Command: Seq[Command], p2Command: Seq[Command]): Unit = {
+    def execute(stage: Stage, p1Command: Seq[Command], p2Command: Seq[Command])(implicit log: Logger): Unit = {
       (sanitize(stage, p1Command, stage.player1.playerId) ++ sanitize(stage, p2Command, stage.player2.playerId)).foreach {
-        case Command.Produce(unitId, kind) =>
+        case command@Command.Produce(unitId, kind) =>
           val unit = stage.unit(unitId)
-          if(unit.kind.canCreate(kind) && unit.owner.hasEnoughResource(kind.cost)) {
+          if(!unit.kind.canCreate(kind)) {
+            log.commandIgnored(unit.owner.playerId, command, s"${unit.kind.name} can't produce ${kind.name}")
+          } else if(!unit.owner.hasEnoughResource(kind.cost)) {
+            log.commandIgnored(unit.owner.playerId, command, s"to produce ${kind.name} need ${kind.cost} resources but only ${unit.owner.resources} available")
+          } else {
             stage.createUnit(kind, unit.owner, unit.pos)
             unit.owner.consumeResource(kind.cost)
           }
-        case Command.Move(unitId, direction) =>
+        case command@Command.Move(unitId, direction) =>
           val unit = stage.unit(unitId)
           val newPos = unit.pos.move(unit.owner.coordinateSystem.toGlobal(direction))
           if(stage.field.validPos(newPos) && unit.movable()) {
@@ -289,6 +323,8 @@ case class CVUnit(id: Int, kind: CVUnitKind, owner: PlayerState, var pos: Pos) {
 
   var hp: Int = maxHp
 
+  def hpString = s"${hp}/${maxHp}"
+
   def isVisible(pos: Pos): Boolean =
     this.pos.dist(pos) <= visibility
 
@@ -303,3 +339,38 @@ case class CVUnit(id: Int, kind: CVUnitKind, owner: PlayerState, var pos: Pos) {
     s"CVUnit(id=${id}, owner=${owner.playerId}, pos=${pos}, kind=${kind}, HP=${hp}/${maxHp})"
 }
 
+trait Thinker {
+  def think(state: VisibleState): Seq[Command]
+}
+
+class Runner {
+  def run(stage: Stage, player1: Thinker, player2: Thinker)(implicit logger: Logger): TurnResult = {
+    var turnResult = run1(stage, player1, player2)
+    while(turnResult == TurnResult.InProgress)
+      turnResult = run(stage, player1, player2)
+    turnResult
+  }
+  def run1(stage: Stage, player1: Thinker, player2: Thinker)(implicit logger: Logger): TurnResult = {
+    val commands1 = player1.think(stage.visibleStateFor(1))
+    val commands2 = player2.think(stage.visibleStateFor(2))
+
+    stage.executeTurn(commands1, commands2)
+  }
+}
+
+// Usage sample
+object Main {
+  def main(args: Array[String]): Unit = {
+    val runner = new Runner
+    implicit val logger = Logger.ShowAll
+    implicit val random = new RandomSource
+    runner.run(Stage.initialState(0),
+      new Thinker {
+        override def think(state: VisibleState): Seq[Command] = Seq()
+      },
+      new Thinker {
+        override def think(state: VisibleState): Seq[Command] = Seq()
+      }
+    )
+  }
+}

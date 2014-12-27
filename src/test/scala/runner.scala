@@ -7,6 +7,7 @@ import com.todesking.codevs4.runner._
 import com.todesking.codevs4.interface._
 
 class RunnerSpec extends RSpecLikeSpec with Matchers {
+  implicit val logger = Logger.Null
   implicit val rand = new RandomSource
   describe("ステージ(Stage)") {
     describeSubject("初期状態", Stage.initialState(99)) { subject =>
