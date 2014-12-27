@@ -121,7 +121,7 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
       val w1 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player1, Pos(51, 51)) }
       val w20 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player2, Pos(51, 61)) }
       val w21 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player2, Pos(62, 51)) }
-      it("現在の状態から、各プレイヤーに対するインプットデータを生成できる(P1)") {
+      it("プレイヤー1に対するデータを生成できる") {
         inside(stage().visibleStateFor(1)) {
           case VisibleState(stageId, turn, resources, playerUnits, opponentUnits, resourceLocations) =>
             stageId           shouldEqual stage().id
@@ -130,6 +130,20 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
             playerUnits       shouldEqual stage().player1.units
             opponentUnits     shouldEqual Seq(w20())
             resourceLocations shouldEqual Seq(Pos(50, 50))
+        }
+      }
+      it("プレイヤー2に対するデータを生成できる。座標系が適切に変換されていること。") {
+        inside(stage().visibleStateFor(2)) {
+          case VisibleState(stageId, turn, resources, playerUnits, opponentUnits, resourceLocations) =>
+            stageId           shouldEqual stage().id
+            turn              shouldEqual stage().turn
+            resources         shouldEqual stage().player2.resources
+            playerUnits       shouldEqual Seq(
+              stage().castle2.copy(pos = Pos(0, 0)),
+              w20().copy(pos = Pos(48, 38)),
+              w21().copy(pos = Pos(37, 48)))
+            opponentUnits     shouldEqual Seq(w1().copy(pos = Pos(48, 48)))
+            resourceLocations shouldEqual Seq()
         }
       }
     }

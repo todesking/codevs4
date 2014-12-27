@@ -20,7 +20,7 @@ class CVRandom {
     from + random.nextInt(to - from + 1)
 }
 
-class PlayerState(val playerId: Int) {
+class PlayerState(val playerId: Int, val coordinateSystem: CoordinateSystem) {
   var resources: Int = 0
   var castle: CVUnit = null
   val units = new ArrayBuffer[CVUnit]
@@ -61,6 +61,22 @@ case class RangedPos(center: Pos, radius: Int) {
     center.dist(pos) <= radius
 }
 
+abstract class CoordinateSystem {
+  def toLocal(pos: Pos): Pos
+  def toGlobal(pos: Pos): Pos
+}
+
+object CoordinateSystem {
+  val TopLeft = new CoordinateSystem {
+    override def toLocal(pos: Pos) = pos
+    override def toGlobal(pos: Pos) = pos
+  }
+  val BottomRight = new CoordinateSystem {
+    override def toLocal(pos: Pos) = Pos(99 - pos.x, 99 - pos.y)
+    override def toGlobal(pos: Pos) = Pos(99 - pos.x, 99 - pos.y)
+  }
+}
+
 case class VisibleState(
   stageId: Int,
   turn: Int,
@@ -75,8 +91,8 @@ class Stage(
   var turn: Int = 0,
   var nextUnitID: Int = 0
 ) {
-  val player1 = new PlayerState(1)
-  val player2 = new PlayerState(2)
+  val player1 = new PlayerState(1, CoordinateSystem.TopLeft)
+  val player2 = new PlayerState(2, CoordinateSystem.BottomRight)
 
   def castle1: CVUnit = player1.castle
   def castle2: CVUnit = player2.castle
@@ -126,9 +142,9 @@ class Stage(
       stageId = this.id,
       turn = this.turn,
       resources = player.resources,
-      playerUnits = player.units,
-      opponentUnits = visibleUnits(player, opponent),
-      resourceLocations = visibleResources(player).toSeq
+      playerUnits = player.units.map { u => u.copy(pos = player.coordinateSystem.toLocal(u.pos)) },
+      opponentUnits = visibleUnits(player, opponent).map { u => u.copy(pos = player.coordinateSystem.toLocal(u.pos)) },
+      resourceLocations = visibleResources(player).map { pos => player.coordinateSystem.toLocal(pos) }.toSeq
     )
   }
 
@@ -246,7 +262,7 @@ class Field(val stage: Stage) {
 
 case class Resource(pos: Pos)
 
-class CVUnit(val id: Int, val kind: CVUnit.Kind, val owner: PlayerState, var pos: Pos) {
+case class CVUnit(id: Int, kind: CVUnit.Kind, owner: PlayerState, var pos: Pos) {
   def maxHp = kind.maxHp
   def attackRange = kind.attackRange
   def visibility = kind.visibility
