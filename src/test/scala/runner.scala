@@ -93,10 +93,10 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
         val w1 = subject().createUnit(CVUnit.Kind.Worker, subject().player1, Pos(50, 50))
         val w2 = subject().createUnit(CVUnit.Kind.Worker, subject().player2, Pos(51, 51))
         val p1Command = Seq(
-          Command.Produce(w1, CVUnit.Kind.Village)
+          Command.Produce(w1.id, CVUnit.Kind.Village)
         )
         val p2Command = Seq(
-          Command.Move(w2, Direction.Right)
+          Command.Move(w2.id, Direction.Right)
         )
         subject().turn shouldEqual 0
 
@@ -168,12 +168,12 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
           Phase.CommandPhase.execute(
             stage(),
             Seq(
-              Command.Move(worker1(), Direction.Down),
-              Command.Move(worker2(), Direction.Right),
-              Command.Move(village(), Direction.Up)
+              Command.Move(worker1().id, Direction.Down),
+              Command.Move(worker2().id, Direction.Right),
+              Command.Move(village().id, Direction.Up)
             ),
             Seq(
-              Command.Move(worker3(), Direction.Down)
+              Command.Move(worker3().id, Direction.Down)
             )
           )
         }
@@ -208,7 +208,7 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
             stage().player1.addResource(initialResource)
             Phase.CommandPhase.execute(
               stage(),
-              Seq(Command.Produce(stage().castle1, CVUnit.Kind.Worker)),
+              Seq(Command.Produce(stage().castle1.id, CVUnit.Kind.Worker)),
               Seq()
             )
           }
@@ -240,7 +240,7 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
             stage().player1.addResource(initialResource)
             Phase.CommandPhase.execute(
               stage(),
-              Seq(Command.Produce(stage().castle1, CVUnit.Kind.Castle)),
+              Seq(Command.Produce(stage().castle1.id, CVUnit.Kind.Castle)),
               Seq()
             )
           }
@@ -253,7 +253,7 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
             stage().player1.addResource(0)
             Phase.CommandPhase.execute(
               stage(),
-              Seq(Command.Produce(stage().castle1, CVUnit.Kind.Worker)),
+              Seq(Command.Produce(stage().castle1.id, CVUnit.Kind.Worker)),
               Seq()
             )
           }
@@ -281,9 +281,9 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
           Phase.CommandPhase.execute(
             stage(),
             Seq(
-              Command.Produce(stage().castle1, CVUnit.Kind.Worker),
-              Command.Produce(stage().castle1, CVUnit.Kind.Worker),
-              Command.Produce(stage().castle1, CVUnit.Kind.Worker)
+              Command.Produce(stage().castle1.id, CVUnit.Kind.Worker),
+              Command.Produce(stage().castle1.id, CVUnit.Kind.Worker),
+              Command.Produce(stage().castle1.id, CVUnit.Kind.Worker)
             ),
             Seq()
           )
@@ -298,7 +298,7 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
           stage().player2.addResource(initialResource)
           Phase.CommandPhase.execute(
             stage(),
-            Seq(Command.Produce(stage().castle2, CVUnit.Kind.Worker)),
+            Seq(Command.Produce(stage().castle2.id, CVUnit.Kind.Worker)),
             Seq()
           )
         }
@@ -312,7 +312,7 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
           stage().castle1.hp = 0
           Phase.CommandPhase.execute(
             stage(),
-            Seq(Command.Produce(stage().castle1, CVUnit.Kind.Worker)),
+            Seq(Command.Produce(stage().castle1.id, CVUnit.Kind.Worker)),
             Seq()
           )
         }

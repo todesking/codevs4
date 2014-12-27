@@ -111,6 +111,8 @@ class Stage(
 
   def units: Seq[CVUnit] = field.units
 
+  def unit(id: Int): CVUnit = units.filter(_.id == id).head
+
   def assertInitialized(): Unit = {
     assert(castle1 != null)
     assert(castle2 != null)
@@ -168,11 +170,11 @@ class Stage(
   }
 }
 
-sealed abstract class Command(val unit: CVUnit) {
+sealed abstract class Command(val unitId: Int) {
 }
 object Command {
-  case class Produce(override val unit: CVUnit, kind: CVUnit.Kind) extends Command(unit)
-  case class Move(override val unit: CVUnit, direction: Direction) extends Command(unit)
+  case class Produce(override val unitId: Int, kind: CVUnit.Kind) extends Command(unitId)
+  case class Move(override val unitId: Int, direction: Direction) extends Command(unitId)
 }
 
 sealed abstract class TurnResult
@@ -397,29 +399,32 @@ object DamageTable {
 object Phase {
   object CommandPhase {
     def execute(stage: Stage, p1Command: Seq[Command], p2Command: Seq[Command]): Unit = {
-      (sanitize(p1Command, stage.player1.playerId) ++ sanitize(p2Command, stage.player2.playerId)).foreach {
-        case Command.Produce(unit, kind) =>
+      (sanitize(stage, p1Command, stage.player1.playerId) ++ sanitize(stage, p2Command, stage.player2.playerId)).foreach {
+        case Command.Produce(unitId, kind) =>
+          val unit = stage.unit(unitId)
           if(unit.kind.canCreate(kind) && unit.owner.hasEnoughResource(kind.cost)) {
             stage.createUnit(kind, unit.owner, unit.pos)
             unit.owner.consumeResource(kind.cost)
           }
-        case Command.Move(unit, direction) =>
+        case Command.Move(unitId, direction) =>
+          val unit = stage.unit(unitId)
           val newPos = unit.pos.move(unit.owner.coordinateSystem.toGlobal(direction))
           if(stage.field.validPos(newPos) && unit.movable()) {
             unit.pos = newPos
           }
       }
     }
-    private[this] def sanitize(commands: Seq[Command], playerId: Int): Seq[Command] = {
+    private[this] def sanitize(stage: Stage, commands: Seq[Command], playerId: Int): Seq[Command] = {
       val commandedIds = scala.collection.mutable.HashSet.empty[Int]
       val sanitized = new ArrayBuffer[Command]
       commands.foreach { command =>
+        val unit = stage.unit(command.unitId)
         if(
-          !commandedIds.contains(command.unit.id) &&
-          command.unit.owner.playerId == playerId &&
-          command.unit.hp > 0
+          !commandedIds.contains(unit.id) &&
+          unit.owner.playerId == playerId &&
+          unit.hp > 0
         ) {
-          commandedIds += command.unit.id
+          commandedIds += unit.id
           sanitized += command
         }
       }
