@@ -89,8 +89,8 @@ case class VisibleState(
   stageId: Int,
   turn: Int,
   resources: Int,
-  playerUnits: Seq[CVUnit],
-  opponentUnits: Seq[CVUnit],
+  playerUnits: Seq[CVUnitView],
+  opponentUnits: Seq[CVUnitView],
   resourceLocations: Seq[Pos]
 )
 
@@ -152,8 +152,8 @@ class Stage(
       stageId = this.id,
       turn = this.turn,
       resources = player.resources,
-      playerUnits = player.units.map { u => u.copy(pos = player.coordinateSystem.toLocal(u.pos)) },
-      opponentUnits = visibleUnits(player, opponent).map { u => u.copy(pos = player.coordinateSystem.toLocal(u.pos)) },
+      playerUnits = player.units.map { u => u.toView.copy(pos = player.coordinateSystem.toLocal(u.pos)) },
+      opponentUnits = visibleUnits(player, opponent).map { u => u.toView.copy(pos = player.coordinateSystem.toLocal(u.pos)) },
       resourceLocations = visibleResources(player).map { pos => player.coordinateSystem.toLocal(pos) }.toSeq
     )
   }
@@ -284,8 +284,29 @@ case class CVUnit(id: Int, kind: CVUnit.Kind, owner: PlayerState, var pos: Pos) 
   def isVisible(pos: Pos): Boolean =
     this.pos.dist(pos) <= visibility
 
+  def toView(): CVUnitView = CVUnitView(
+    id = id,
+    kind =kind,
+    hp = hp,
+    pos = pos
+  )
+
   override def toString() =
     s"CVUnit(id=${id}, owner=${owner.playerId}, pos=${pos}, kind=${kind}, HP=${hp}/${maxHp})"
+}
+
+case class CVUnitView(
+  id: Int,
+  kind: CVUnit.Kind,
+  hp: Int,
+  pos: Pos
+) {
+  def maxHp = kind.maxHp
+  def visibility = kind.visibility
+  def movable(): Boolean = kind.movable
+  def attackRange = kind.attackRange
+  def isVisible(pos: Pos): Boolean =
+    this.pos.dist(pos) <= visibility
 }
 
 object CVUnit {

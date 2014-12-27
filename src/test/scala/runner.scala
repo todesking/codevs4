@@ -127,8 +127,8 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
             stageId           shouldEqual stage().id
             turn              shouldEqual stage().turn
             resources         shouldEqual stage().player1.resources
-            playerUnits       shouldEqual stage().player1.units
-            opponentUnits     shouldEqual Seq(w20())
+            playerUnits       shouldEqual stage().player1.units.map(_.toView)
+            opponentUnits     shouldEqual Seq(w20().toView)
             resourceLocations shouldEqual Seq(Pos(50, 50))
         }
       }
@@ -141,8 +141,8 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
             playerUnits       shouldEqual Seq(
               stage().castle2.copy(pos = Pos(0, 0)),
               w20().copy(pos = Pos(48, 38)),
-              w21().copy(pos = Pos(37, 48)))
-            opponentUnits     shouldEqual Seq(w1().copy(pos = Pos(48, 48)))
+              w21().copy(pos = Pos(37, 48))).map(_.toView)
+            opponentUnits     shouldEqual Seq(w1().copy(pos = Pos(48, 48))).map(_.toView)
             resourceLocations shouldEqual Seq()
         }
       }
