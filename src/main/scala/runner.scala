@@ -92,8 +92,13 @@ class Stage(
   }
 
   def executeTurn(p1Command: Seq[Command], p2Command: Seq[Command]): TurnResult = {
+    Phase.CommandPhase.execute(this, p1Command, p2Command)
+    Phase.BattlePhase.execute(this)
+    Phase.SweepPhase.execute(this)
+    Phase.ResourcingPhase.execute(this)
+    val result = Phase.FinishingPhase.result(this)
     turn += 1
-    TurnResult.InProgress
+    result
   }
 }
 

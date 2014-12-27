@@ -87,11 +87,28 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
     }
     describeSubject("ターン進行", Stage.initialState(0)) { subject =>
       it("両者の入力を受け取ってターンを進め、結果を返す") {
-        val p1Command = Seq()
-        val p2Command = Seq()
+        subject().player1.resources += 1000
+        subject().field.addResource(Pos(50, 50))
+        val w1 = subject().createUnit(CVUnit.Kind.Worker, subject().player1, Pos(50, 50))
+        val w2 = subject().createUnit(CVUnit.Kind.Worker, subject().player2, Pos(51, 51))
+        val p1Command = Seq(
+          Command.Produce(w1, CVUnit.Kind.Village)
+        )
+        val p2Command = Seq(
+          Command.Move(w2, Direction.Left)
+        )
         subject().turn shouldEqual 0
+
         subject().executeTurn(p1Command, p2Command) shouldEqual TurnResult.InProgress
+
         subject().turn shouldEqual 1
+        subject().field.unitsAt(Pos(50, 50)).size shouldEqual 2
+        w1.hp shouldEqual(2000 - 50)
+        w2.hp shouldEqual(2000 - 100 - 100)
+        w1.pos shouldEqual Pos(50, 50)
+        w2.pos shouldEqual Pos(50, 51)
+        subject().player1.resources shouldEqual(1000 - 100 + 11)
+        subject().player2.resources shouldEqual 10
       }
     }
     describe("インプット") {
