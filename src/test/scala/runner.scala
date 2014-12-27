@@ -111,13 +111,15 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
       describe("移動コマンド") {
         val worker1 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player1, Pos(0, 0)) }
         val worker2 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player1, Pos(99, 99)) }
+        val village = let { stage().createUnit(CVUnit.Kind.Village, stage().player1, Pos(50, 50)) }
 
         before {
           Phase.CommandPhase.execute(
             stage(),
             Seq(
               Command.Move(worker1(), Direction.Down),
-              Command.Move(worker2(), Direction.Right)
+              Command.Move(worker2(), Direction.Right),
+              Command.Move(village(), Direction.Up)
             ),
             Seq()
           )
@@ -134,7 +136,9 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
           }
         }
         describe("移動不能(動けないユニット)") {
-          it("何もしない")(pending)
+          it("何もしない") {
+            village().pos shouldEqual Pos(50, 50)
+          }
         }
       }
 
@@ -427,17 +431,6 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
           result() shouldEqual TurnResult.Draw
         }
       }
-    }
-  }
-  describe("ユニット(Unit)") {
-    describe("城(Castle)") {
-      it("ワーカーを生産できる")(pending)
-    }
-    describe("村(Village)") {
-      it("ワーカーを生産できる")(pending)
-    }
-    describe("拠点(Base)") {
-      it("戦闘ユニットを生産できる")(pending)
     }
   }
 }

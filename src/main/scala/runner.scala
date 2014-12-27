@@ -202,6 +202,8 @@ class CVUnit(val id: Int, val kind: CVUnit.Kind, val owner: PlayerState, var pos
   def attackRange = kind.attackRange
   def visibility = kind.visibility
 
+  def movable(): Boolean = kind.movable
+
   var hp: Int = maxHp
 
   def isVisible(pos: Pos): Boolean =
@@ -219,6 +221,7 @@ object CVUnit {
     val attackRange: Int,
     val maxHp: Int,
     val visibility: Int,
+    val movable: Boolean,
     val creatables: Set[Kind] = Set.empty
   ) {
     def canCreate(kind: Kind): Boolean =
@@ -233,7 +236,9 @@ object CVUnit {
       maxHp = 2000,
       attackRange = 2,
       visibility = 10,
-      cost = 40
+      cost = 40,
+      movable = true,
+      creatables = Set(Village)
     )
     object Castle extends Kind(
       name = "Castle",
@@ -242,6 +247,17 @@ object CVUnit {
       attackRange = 10,
       visibility = 10,
       cost = 0,
+      movable = false,
+      creatables = Set(Worker)
+    )
+    object Village extends Kind(
+      name = "Village",
+      code = "5",
+      maxHp = 20000,
+      attackRange = 2,
+      visibility = 10,
+      cost = 100,
+      movable = false,
       creatables = Set(Worker)
     )
     object Knight extends Kind(
@@ -250,7 +266,8 @@ object CVUnit {
       maxHp = 5000,
       attackRange = 2,
       visibility = 4,
-      cost = 20
+      cost = 20,
+      movable = true
     )
   }
 }
@@ -262,8 +279,10 @@ object DamageTable {
       case (Worker, _) => 100
       case (Knight, Worker) => 100
       case (Knight, Knight) => 500
+      case (Knight, Village) => 200
       case (Knight, _) => 200
       case (Castle, _) => 100
+      case (Village, _) => 100
     }
   }
 }
@@ -279,7 +298,7 @@ object Phase {
           }
         case Command.Move(unit, direction) =>
           val newPos = unit.pos.move(direction)
-          if(stage.field.validPos(newPos)) {
+          if(stage.field.validPos(newPos) && unit.movable()) {
             unit.pos = newPos
           }
       }
