@@ -9,6 +9,7 @@ import scala.collection.mutable.ArrayBuffer
 trait Logger {
   def turnStart(stage: Stage, commands1: Seq[Command], commands2: Seq[Command]): Unit = ()
   def commandIgnored(playerId: Int, command: Command, message: String): Unit = ()
+  def stageEnd(stage: Stage, result: TurnResult): Unit = ()
 }
 object Logger {
   val Null = new Logger {
@@ -23,7 +24,10 @@ object Logger {
       val h = "[INFO]"
       println(s"$h STAGE ${stage.id}, Turn ${stage.turn}")
       stage.players.zip(Seq(commands1, commands2)).foreach { case (p, commands) =>
-        println(s"$h   Player ${p.playerId}, Resources ${p.resources} Castle ${p.castle.hpString}")
+        val unitsCount = Seq(CVUnitKind.Worker, CVUnitKind.Knight, CVUnitKind.Fighter, CVUnitKind.Assassin).map { kind =>
+          p.units.filter(_.kind == kind).size
+        }.mkString("/")
+        println(s"$h   Player ${p.playerId}, Resources ${p.resources}, Castle ${p.castle.hpString}, Units(W/K/F/A) ${unitsCount}")
         commands.foreach { c =>
           println(s"$h     ${c}")
         }
@@ -31,6 +35,9 @@ object Logger {
     }
     override def commandIgnored(playerId: Int, command: Command, message: String): Unit = {
       println(s"[WARN] Player ${playerId}: command ignored: ${command}, message=${message}")
+    }
+    override def stageEnd(stage: Stage, result: TurnResult): Unit = {
+      println(s"[INFO] Stage ${stage.id} end: ${result}, Turn ${stage.turn}")
     }
   }
 }
@@ -346,8 +353,10 @@ trait Thinker {
 class Runner {
   def run(stage: Stage, player1: Thinker, player2: Thinker)(implicit logger: Logger): TurnResult = {
     var turnResult = run1(stage, player1, player2)
-    while(turnResult == TurnResult.InProgress)
-      turnResult = run(stage, player1, player2)
+    while(turnResult == TurnResult.InProgress) {
+      turnResult = run1(stage, player1, player2)
+    }
+    logger.stageEnd(stage, turnResult)
     turnResult
   }
   def run1(stage: Stage, player1: Thinker, player2: Thinker)(implicit logger: Logger): TurnResult = {
