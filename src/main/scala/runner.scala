@@ -241,10 +241,9 @@ object CVUnit {
       maxHp = 50000,
       attackRange = 10,
       visibility = 10,
-      cost = 0
-    ) {
-      override val creatables: Set[Kind] = Set(Worker)
-    }
+      cost = 0,
+      creatables = Set(Worker)
+    )
     object Knight extends Kind(
       name = "Knight",
       code = "1",
