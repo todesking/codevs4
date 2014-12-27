@@ -4,12 +4,14 @@ import Ext._
 
 import scala.collection.mutable.ArrayBuffer
 
-sealed abstract class Direction
+sealed abstract class Direction {
+  val flip: Direction
+}
 object Direction {
-  case object Up extends Direction
-  case object Down extends Direction
-  case object Left extends Direction
-  case object Right extends Direction
+  case object Up    extends Direction { lazy val flip = Down }
+  case object Down  extends Direction { lazy val flip = Up }
+  case object Left  extends Direction { lazy val flip = Right }
+  case object Right extends Direction { lazy val flip = Left }
 }
 
 class CVRandom {
@@ -64,16 +66,22 @@ case class RangedPos(center: Pos, radius: Int) {
 abstract class CoordinateSystem {
   def toLocal(pos: Pos): Pos
   def toGlobal(pos: Pos): Pos
+  def toLocal(dir: Direction): Direction
+  def toGlobal(dir: Direction): Direction
 }
 
 object CoordinateSystem {
   val TopLeft = new CoordinateSystem {
     override def toLocal(pos: Pos) = pos
     override def toGlobal(pos: Pos) = pos
+    override def toLocal(dir: Direction) = dir
+    override def toGlobal(dir: Direction) = dir
   }
   val BottomRight = new CoordinateSystem {
     override def toLocal(pos: Pos) = Pos(99 - pos.x, 99 - pos.y)
     override def toGlobal(pos: Pos) = Pos(99 - pos.x, 99 - pos.y)
+    override def toLocal(dir: Direction) = dir.flip
+    override def toGlobal(dir: Direction) = dir.flip
   }
 }
 
@@ -396,7 +404,7 @@ object Phase {
             unit.owner.consumeResource(kind.cost)
           }
         case Command.Move(unit, direction) =>
-          val newPos = unit.pos.move(direction)
+          val newPos = unit.pos.move(unit.owner.coordinateSystem.toGlobal(direction))
           if(stage.field.validPos(newPos) && unit.movable()) {
             unit.pos = newPos
           }

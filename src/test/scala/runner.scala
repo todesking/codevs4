@@ -96,7 +96,7 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
           Command.Produce(w1, CVUnit.Kind.Village)
         )
         val p2Command = Seq(
-          Command.Move(w2, Direction.Left)
+          Command.Move(w2, Direction.Right)
         )
         subject().turn shouldEqual 0
 
@@ -161,6 +161,7 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
       describe("移動コマンド") {
         val worker1 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player1, Pos(0, 0)) }
         val worker2 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player1, Pos(99, 99)) }
+        val worker3 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player2, Pos(99, 99)) }
         val village = let { stage().createUnit(CVUnit.Kind.Village, stage().player1, Pos(50, 50)) }
 
         before {
@@ -171,13 +172,18 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
               Command.Move(worker2(), Direction.Right),
               Command.Move(village(), Direction.Up)
             ),
-            Seq()
+            Seq(
+              Command.Move(worker3(), Direction.Down)
+            )
           )
         }
 
         describe("移動可能") {
           it("ユニットが指示された方向に移動する") {
             worker1().pos shouldEqual Pos(0, 1)
+          }
+          it("方向の指定はプレイヤーのローカル座標系で行われる") {
+            worker3().pos shouldEqual Pos(99, 98)
           }
         }
         describe("移動不能(座標がフィールド外)") {
