@@ -230,6 +230,16 @@ object CVUnit {
       s"${name}"
   }
   object Kind {
+    object Castle extends Kind(
+      name = "Castle",
+      code = "-",
+      maxHp = 50000,
+      attackRange = 10,
+      visibility = 10,
+      cost = 0,
+      movable = false,
+      creatables = Set(Worker)
+    )
     object Worker extends Kind(
       name = "Worker",
       code = "0",
@@ -240,15 +250,32 @@ object CVUnit {
       movable = true,
       creatables = Set(Village)
     )
-    object Castle extends Kind(
-      name = "Castle",
-      code = "-",
-      maxHp = 50000,
-      attackRange = 10,
-      visibility = 10,
-      cost = 0,
-      movable = false,
-      creatables = Set(Worker)
+    object Knight extends Kind(
+      name = "Knight",
+      code = "1",
+      maxHp = 5000,
+      attackRange = 2,
+      visibility = 4,
+      cost = 20,
+      movable = true
+    )
+    object Fighter extends Kind(
+      name = "Fighter",
+      code = "2",
+      maxHp = 5000,
+      attackRange = 2,
+      visibility = 4,
+      cost = 40,
+      movable = true
+    )
+    object Assassin extends Kind(
+      name = "Assassin",
+      code = "3",
+      maxHp = 5000,
+      attackRange = 2,
+      visibility = 4,
+      cost = 60,
+      movable = true
     )
     object Village extends Kind(
       name = "Village",
@@ -260,14 +287,15 @@ object CVUnit {
       movable = false,
       creatables = Set(Worker)
     )
-    object Knight extends Kind(
-      name = "Knight",
-      code = "1",
-      maxHp = 5000,
+    object Barrack extends Kind(
+      name = "Barrack",
+      code = "6",
+      maxHp = 20000,
       attackRange = 2,
       visibility = 4,
-      cost = 20,
-      movable = true
+      cost = 500,
+      movable = false,
+      creatables = Set(Worker)
     )
   }
 }
@@ -276,13 +304,19 @@ object DamageTable {
   def apply(attacker: CVUnit.Kind, defender: CVUnit.Kind): Int = {
     import CVUnit.Kind._
     (attacker, defender) match {
-      case (Worker, _) => 100
-      case (Knight, Worker) => 100
-      case (Knight, Knight) => 500
-      case (Knight, Village) => 200
-      case (Knight, _) => 200
-      case (Castle, _) => 100
-      case (Village, _) => 100
+      case (Worker, _)                 => 100
+      case (Knight, Worker)            => 100
+      case (Knight, Knight)            => 500
+      case (Knight, _)                 => 200
+      case (Fighter, Worker)           => 500
+      case (Fighter, Knight)           => 1600
+      case (Fighter, _)                => 200
+      case (Assassin, Worker|Fighter)  => 1000
+      case (Assassin, Knight|Assassin) => 500
+      case (Assassin, _)               => 200
+      case (Castle, _)                 => 100
+      case (Village, _)                => 100
+      case (Barrack, _)                => 100
     }
   }
 }
