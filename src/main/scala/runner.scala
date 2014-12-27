@@ -334,7 +334,17 @@ object Phase {
   }
   object FinishingPhase {
     def result(stage: Stage): TurnResult = {
-      TurnResult.InProgress
+      val dead = (stage.castle1.hp <= 0, stage.castle2.hp <= 0)
+      dead match {
+        case (true, false) => TurnResult.P2Win
+        case (false, true) => TurnResult.P1Win
+        case (true, true) => TurnResult.Draw
+        case (false, false) =>
+          if(stage.turn >= 1000)
+            TurnResult.Draw
+          else
+            TurnResult.InProgress
+      }
     }
   }
 }

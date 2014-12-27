@@ -391,16 +391,41 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
         }
       }
       describe("P1の城HPのみ<=0") {
-        it("P2の勝ちと判定される")(pending)
+        before {
+          stage().castle1.hp = 0
+        }
+        val result = let { Phase.FinishingPhase.result(stage()) }
+        it("P2の勝ちと判定される") {
+          result() shouldEqual TurnResult.P2Win
+        }
       }
-      describe("P1の城HPのみ<=0") {
-        it("P1の勝ちと判定される")(pending)
+      describe("P2の城HPのみ<=0") {
+        before {
+          stage().castle2.hp = 0
+        }
+        val result = let { Phase.FinishingPhase.result(stage()) }
+        it("P1の勝ちと判定される") {
+          result() shouldEqual TurnResult.P1Win
+        }
       }
       describe("両者の城HP<=0") {
-        it("引き分けと判定される")(pending)
+        before {
+          stage().castle1.hp = 0
+          stage().castle2.hp = 0
+        }
+        val result = let { Phase.FinishingPhase.result(stage()) }
+        it("引き分けと判定される") {
+          result() shouldEqual TurnResult.Draw
+        }
       }
       describe("両者の城HP>0かつ1000ターン経過した") {
-        it("引き分けと判定される")(pending)
+        before {
+          stage().turn = 1000
+        }
+        val result = let { Phase.FinishingPhase.result(stage()) }
+        it("引き分けと判定される") {
+          result() shouldEqual TurnResult.Draw
+        }
       }
     }
   }
