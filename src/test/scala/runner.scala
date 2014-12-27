@@ -1,6 +1,7 @@
 package com.todesking.codevs4.runner
 
 import org.scalatest.{FunSpec, Matchers}
+import org.scalatest.Inside._
 
 class RunnerSpec extends RSpecLikeSpec with Matchers {
   implicit val rand = new CVRandom
@@ -111,8 +112,26 @@ class RunnerSpec extends RSpecLikeSpec with Matchers {
         subject().player2.resources shouldEqual 10
       }
     }
-    describe("インプット") {
-      it("現在の状態から、各プレイヤーに対するインプットデータを生成できる")(pending)
+    describe("結果生成") {
+      val stage = let { Stage.minimalState() }
+      before {
+        stage().field.addResource(Pos(50, 50))
+        stage().field.addResource(Pos(90, 90))
+      }
+      val w1 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player1, Pos(51, 51)) }
+      val w20 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player2, Pos(51, 55)) }
+      val w21 = let { stage().createUnit(CVUnit.Kind.Worker, stage().player2, Pos(56, 51)) }
+      it("現在の状態から、各プレイヤーに対するインプットデータを生成できる(P1)") {
+        inside(stage().visibleStateFor(1)) {
+          case VisibleState(stageId, turn, resources, playerUnits, opponentUnits, resourceLocations) =>
+            stageId           shouldEqual stage().id
+            turn              shouldEqual stage().turn
+            resources         shouldEqual stage().player1.resources
+            playerUnits       shouldEqual stage().player1.units
+            opponentUnits     shouldEqual Seq(w20())
+            resourceLocations shouldEqual Seq(Pos(50, 50))
+        }
+      }
     }
     describe("アウトプット") {
       it("プレイヤーからのコマンドを解釈できる")(pending)

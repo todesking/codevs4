@@ -52,6 +52,15 @@ case class Pos(x: Int, y: Int) {
     s"($x, $y)"
 }
 
+case class VisibleState(
+  stageId: Int,
+  turn: Int,
+  resources: Int,
+  playerUnits: Seq[CVUnit],
+  opponentUnits: Seq[CVUnit],
+  resourceLocations: Seq[Pos]
+)
+
 class Stage(
   val id: Int,
   var turn: Int = 0,
@@ -99,6 +108,19 @@ class Stage(
     val result = Phase.FinishingPhase.result(this)
     turn += 1
     result
+  }
+
+  def visibleStateFor(playerId: Int): VisibleState = {
+    val player = players.filter(_.playerId == playerId).head
+    val opponent = players.filter(_.playerId != playerId).head
+    VisibleState(
+      stageId = this.id,
+      turn = this.turn,
+      resources = player.resources,
+      playerUnits = player.units,
+      opponentUnits = opponent.units,
+      resourceLocations = field.resources.map(_.pos)
+    )
   }
 }
 
